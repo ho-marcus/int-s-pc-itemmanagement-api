@@ -1,0 +1,6 @@
+#%RAML 1.0 Library
+
+securitySchemes:
+  basicAuthentication: !include securityFragments/basicAuthentication/Basic-Authentication.raml
+  clientIdEnforcement: !include securityFragments/clientIdEnforcement/clientID-enforced-headers.raml
+  oAuth2.0: !include securityFragments/oAuth2.0Security/OAuth2-Security-Scheme.raml

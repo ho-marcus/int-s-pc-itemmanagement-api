@@ -1,0 +1,614 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema attributeFormDefault="unqualified" xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+	<xs:annotation>
+		<xs:appinfo>
+			<title>Wincanton Standard WMS Item Request</title>
+		</xs:appinfo>
+		<xs:documentation>
+    (c) Wincanton plc. 2023
+    This structure is used to pass information about the WMS Item to the Wincanton Item service by an external, or internal, party.
+    Current Version: 1.1
+
+	Initial Version: 1.0 Date: 3rd March 2022 Design: Andy Varney and Rich Varley
+	
+	Amended Version: 1.1 Date: 9th November 2023
+	Author: Rich Varley
+	Amendment: Fixes to support correct handling of Reference Fields (Strings and Numbers) to match the Manhattan WMS requirement.
+	
+	Amended Version: 1.2 Date: 29th January 2024
+	Author: Rich Varley
+	Amendment: Fixes to support correct handling of different handling units and their dimensions
+	
+        </xs:documentation>
+	</xs:annotation>
+	<xs:element name="wincantonStandardWMSItemRequest">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="wincantonStandardWMSItem">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="itemCode">
+								<xs:simpleType>
+									<xs:restriction base="xs:string">
+										<xs:minLength value="1"/>
+										<xs:maxLength value="100"/>
+									</xs:restriction>
+								</xs:simpleType>
+							</xs:element>							
+							<xs:element name="status">
+								<xs:annotation>
+									<xs:documentation>This represents the status of the item as declared by the client.
+                                        Wincanton will support a defined list of acceptable values.</xs:documentation>
+								</xs:annotation>
+								<xs:simpleType>
+									<xs:restriction base="xs:string">
+										<xs:enumeration value="Active"/>
+										<xs:enumeration value="End of Life"/>
+									</xs:restriction>
+								</xs:simpleType>
+							</xs:element>
+							<xs:element name="descriptions">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="longDescription">
+											<xs:simpleType>
+												<xs:restriction base="xs:string">
+													<xs:minLength value="1"/>
+													<xs:maxLength value="500"/>
+												</xs:restriction>
+											</xs:simpleType>
+										</xs:element>											
+										<xs:element name="itemDescription">
+											<xs:simpleType>
+												<xs:restriction base="xs:string">
+													<xs:minLength value="1"/>
+													<xs:maxLength value="65"/>
+												</xs:restriction>
+											</xs:simpleType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="baseStorageUnitofMeasure">
+								<xs:annotation>
+									<xs:documentation>Unit Type identifies the level that this item will be stored in.  Currently Allowing Unit Only.
+									</xs:documentation>
+								</xs:annotation>
+								<xs:simpleType>
+									<xs:restriction base="xs:string">
+										<xs:enumeration value="Unit"/>
+									</xs:restriction>
+								</xs:simpleType>
+							</xs:element>
+							<xs:element name="orderingUnitofMeasure">
+								<xs:annotation>
+									<xs:documentation>Unit Type identifies the level that this item will be ordered in.  Currently Allowing Unit Only.
+									</xs:documentation>
+								</xs:annotation>
+								<xs:simpleType>
+									<xs:restriction base="xs:string">
+										<xs:enumeration value="Unit"/>
+									</xs:restriction>
+								</xs:simpleType>
+							</xs:element>
+							<xs:element minOccurs="0" name="color">
+								<xs:annotation>
+									<xs:documentation>Part of the Item definition
+									</xs:documentation>
+								</xs:annotation>
+								<xs:simpleType>
+									<xs:restriction base="xs:string">
+										<xs:minLength value="1"/>
+										<xs:maxLength value="4"/>
+									</xs:restriction>
+								</xs:simpleType>
+							</xs:element>
+							<xs:element minOccurs="0" name="sizeDescription">
+								<xs:annotation>
+									<xs:documentation>Part of the Item definition
+									</xs:documentation>
+								</xs:annotation>
+								<xs:simpleType>
+									<xs:restriction base="xs:string">
+										<xs:minLength value="1"/>
+										<xs:maxLength value="15"/>
+									</xs:restriction>
+								</xs:simpleType>
+							</xs:element>
+							<xs:element minOccurs="0" name="barcode">
+								<xs:annotation>
+									<xs:documentation>The package barcode used to identify the item.
+									</xs:documentation>
+								</xs:annotation>
+								<xs:simpleType>
+									<xs:restriction base="xs:string">
+										<xs:minLength value="1"/>
+										<xs:maxLength value="50"/>
+									</xs:restriction>
+								</xs:simpleType>
+							</xs:element>
+							<xs:element minOccurs="0" name="unitDimensions">
+								<xs:annotation>
+									<xs:documentation>Dimensions Group allowing one or more Dimensions to be provided by the client for this Item at Unit Level.</xs:documentation>
+								</xs:annotation>
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element minOccurs="0" name="handlingUnitDimensions" type="handlingUnitDimensions"></xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element minOccurs="0" name="handlingUnits">
+								<xs:annotation>
+									<xs:documentation>Group detailing Information about other handling unit types for this item
+									</xs:documentation>
+								</xs:annotation>
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element minOccurs="0" name="handlingUnitCase">
+											<xs:annotation>
+												<xs:documentation>Information provided for the Item for this CASE handling unit type
+												</xs:documentation>
+											</xs:annotation>
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="handlingUnitDetails" type="handlingUnitDetails"></xs:element>
+													<xs:element name="handlingUnitDimensions" type="handlingUnitDimensions"></xs:element>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element minOccurs="0" name="handlingUnitPallet">
+											<xs:annotation>
+												<xs:documentation>Information provided for the Item for this PALLET handling unit type
+												</xs:documentation>
+											</xs:annotation>
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="handlingUnitDetails" type="handlingUnitDetails"></xs:element>
+													<xs:element name="handlingUnitDimensions" type="handlingUnitDimensions"></xs:element>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element minOccurs="0" name="shelfLife">
+								<xs:annotation>
+									<xs:documentation>Shelf Life Group allowing any Shelf Life Requirements to be provided by the client for this Item.</xs:documentation>
+								</xs:annotation>
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="shelfLifeIndicator" minOccurs="0">
+											<xs:annotation>
+												<xs:documentation>The shelf life indicator defines whether the item is shelf life sensitive and therefore has shelf life
+                                            </xs:documentation>
+											</xs:annotation>
+											<xs:simpleType>
+												<xs:restriction base="xs:string">
+													<xs:minLength value="1"/>
+													<xs:maxLength value="1"/>
+													<xs:pattern value="1|0"/>
+												</xs:restriction>
+											</xs:simpleType>
+										</xs:element>
+										<xs:element name="shelfLifeDays" minOccurs="0">
+											<xs:annotation>
+												<xs:documentation>Shelf Life Days is the average shelf life of the Item expressed in days
+                                            </xs:documentation>
+											</xs:annotation>
+											<xs:simpleType>
+												<xs:restriction base="xs:integer">
+													<xs:pattern value="[0-9][0-9][0-9][0-9][0-9]"/>
+												</xs:restriction>
+											</xs:simpleType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element minOccurs="0" name="referenceFields">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element minOccurs="0" name="referenceStrings">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element minOccurs="10" maxOccurs="10" name="referenceFieldString">
+														<xs:annotation>
+															<xs:documentation>
+																Reference Fields to hold extra textual information that may be required on the outbound Goods Receipt interface.
+																Mostly used for bespoke solutions.
+																Amendment Version 1.1: minOccurs set to 10 and minLength set to 0 to allow an empty tag to be provided.  The mapping should not need to be changed as there will now be a matching input element for each WMS output element although if the input element is NULL no output element will need to be created.
+															</xs:documentation>
+														</xs:annotation>
+														<xs:simpleType>
+															<xs:restriction base="xs:string">
+																<xs:minLength value="0"/>
+																<xs:maxLength value="25"/>
+															</xs:restriction>
+														</xs:simpleType>
+													</xs:element>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+										<xs:element minOccurs="0" name="referenceNumbers">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element minOccurs="5" maxOccurs="5" name="referenceFieldNumber">
+														<xs:annotation>
+															<xs:documentation>
+																Reference Fields to hold and extra numerical information that may be required on the outbound Goods Receipt interface. 
+																Mostly used for bespoke solutions.
+																Amendment Version 1.1: minOccurs set to 5.  The mapping will need to be changed to include a rule that does not create an output element if the input value is 0.  There will now be a matching input element for each WMS output element which will allow alignment of the elements.
+															</xs:documentation>
+														</xs:annotation>
+														<xs:simpleType>
+															<xs:restriction base="xs:decimal">
+																<xs:totalDigits value="13"/>
+																<xs:fractionDigits value="5"/>
+															</xs:restriction>
+														</xs:simpleType>
+													</xs:element>
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element minOccurs="0" name="supplierCrossReferenceInformation">
+								<xs:annotation>
+									<xs:documentation>Group Element allowing for Suppliers Information for this item to be specified.</xs:documentation>
+								</xs:annotation>
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="supplierBarcode">
+											<xs:annotation>
+												<xs:documentation>The barcode applied to the item by the Supplier</xs:documentation>
+											</xs:annotation>
+											<xs:simpleType>
+												<xs:restriction base="xs:string">
+													<xs:minLength value="1"/>
+													<xs:maxLength value="20"/>
+												</xs:restriction>
+											</xs:simpleType>
+										</xs:element>
+										<xs:element name="supplierQuantity">
+											<xs:annotation>
+												<xs:documentation>Quantity associated to the barcode by the supplier.</xs:documentation>
+											</xs:annotation>
+											<xs:simpleType>
+												<xs:restriction base="xs:nonNegativeInteger">
+													<xs:minExclusive value="0"/>
+													<xs:maxInclusive value="9999999999999999"/>
+												</xs:restriction>
+											</xs:simpleType>
+										</xs:element>
+										<xs:element minOccurs="0" name="itemBarcode">
+											<xs:annotation>
+												<xs:documentation>Package barcode for this particular Supplier/Vendor Barcode if different to the supplier barcode value</xs:documentation>
+											</xs:annotation>
+											<xs:simpleType>
+												<xs:restriction base="xs:string">
+													<xs:minLength value="1"/>
+													<xs:maxLength value="50"/>
+												</xs:restriction>
+											</xs:simpleType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element minOccurs="0" name="attributes">
+								<xs:annotation>
+									<xs:documentation>Group Element holding a list of attributes entities relating to this Item that may need to be held within Wincanton systems for future reference.  Possible attributes could include EAN Codes, Guarantee Periods or Product Groups.
+									</xs:documentation>
+								</xs:annotation>
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element minOccurs="0" name="standardBundleQuantity">
+											<xs:annotation>
+												<xs:documentation>Standard Bundle Quantity in Units.
+												</xs:documentation>
+											</xs:annotation>
+											<xs:simpleType>
+												<xs:restriction base="xs:nonNegativeInteger">
+													<xs:minExclusive value="0"/>
+													<xs:maxInclusive value="999999999"/>
+												</xs:restriction>
+											</xs:simpleType>
+										</xs:element>
+										<xs:element minOccurs="0" name="productType">
+											<xs:annotation>
+												<xs:documentation>Type of product the item is.
+												</xs:documentation>
+											</xs:annotation>
+											<xs:simpleType>
+												<xs:restriction base="xs:string">
+													<xs:minLength value="1"/>
+													<xs:maxLength value="3"/>
+												</xs:restriction>
+											</xs:simpleType>
+										</xs:element>
+										<xs:element minOccurs="0" name="subGroup">
+											<xs:annotation>
+												<xs:documentation>Sub-Product Group of item.
+												</xs:documentation>
+											</xs:annotation>
+											<xs:simpleType>
+												<xs:restriction base="xs:string">
+													<xs:minLength value="1"/>
+													<xs:maxLength value="3"/>
+												</xs:restriction>
+											</xs:simpleType>
+										</xs:element>
+										<xs:element minOccurs="0" name="salesGroup">
+											<xs:annotation>
+												<xs:documentation>Sales Group of Item.
+												</xs:documentation>
+											</xs:annotation>
+											<xs:simpleType>
+												<xs:restriction base="xs:string">
+													<xs:minLength value="1"/>
+													<xs:maxLength value="6"/>
+												</xs:restriction>
+											</xs:simpleType>
+										</xs:element>
+										<xs:element minOccurs="0" name="ECCNNumber">
+											<xs:annotation>
+												<xs:documentation>ECCN Number of item.  Export Control Classification Number (ECCN) is applicable for all products that are controlled by the Export Administration Regulations (EAR).
+												</xs:documentation>
+											</xs:annotation>
+											<xs:simpleType>
+												<xs:restriction base="xs:string">
+													<xs:minLength value="1"/>
+													<xs:maxLength value="6"/>
+												</xs:restriction>
+											</xs:simpleType>
+										</xs:element>
+										<xs:element minOccurs="0" name="expiryDateRequired">
+											<xs:annotation>
+												<xs:documentation>
+													Defines if Warehouse Management prompts the user for expiration date.
+												</xs:documentation>
+											</xs:annotation>
+											<xs:simpleType>
+												<xs:restriction base="xs:string">
+													<xs:enumeration value="Prompt if Null"/>
+													<xs:enumeration value="Always Prompt"/>
+													<xs:enumeration value="Never Prompt"/>
+												</xs:restriction>
+											</xs:simpleType>
+										</xs:element>
+										<xs:element minOccurs="0" name="itemAttributesRequired">
+											<xs:annotation>
+												<xs:documentation>
+													Defines if Warehouse Management prompts the user for Item Attributes.
+												</xs:documentation>
+											</xs:annotation>
+											<xs:simpleType>
+												<xs:restriction base="xs:string">
+													<xs:enumeration value="Not Required"/>
+													<xs:enumeration value="Accept If Not Present"/>
+													<xs:enumeration value="Allow User Override"/>
+												</xs:restriction>
+											</xs:simpleType>
+										</xs:element>
+										<xs:element minOccurs="0" name="lotRequired">
+											<xs:annotation>
+												<xs:documentation>
+													Defines if Warehouse Management prompts the user for Lot Reference.
+												</xs:documentation>
+											</xs:annotation>
+											<xs:simpleType>
+												<xs:restriction base="xs:string">
+													<xs:enumeration value="Not Required"/>
+													<xs:enumeration value="Accept If Not Present"/>
+													<xs:enumeration value="Allow User Override"/>
+												</xs:restriction>
+											</xs:simpleType>
+										</xs:element>
+										<xs:element minOccurs="0" name="productStatusRequired">
+											<xs:annotation>
+												<xs:documentation>
+													Defines if Warehouse Management prompts the user for Product Status.
+												</xs:documentation>
+											</xs:annotation>
+											<xs:simpleType>
+												<xs:restriction base="xs:string">
+													<xs:enumeration value="Not Required"/>
+													<xs:enumeration value="Accept If Not Present"/>
+													<xs:enumeration value="Allow User Override"/>
+												</xs:restriction>
+											</xs:simpleType>
+										</xs:element>
+										<xs:element minOccurs="0" name="countryOfOriginRequired">
+											<xs:annotation>
+												<xs:documentation>
+													Defines if Warehouse Management prompts the user for Country of Origin.
+												</xs:documentation>
+											</xs:annotation>
+											<xs:simpleType>
+												<xs:restriction base="xs:string">
+													<xs:enumeration value="Not Required"/>
+													<xs:enumeration value="Accept If Not Present"/>
+													<xs:enumeration value="Allow User Override"/>
+												</xs:restriction>
+											</xs:simpleType>
+										</xs:element>
+										<xs:element minOccurs="0" name="serialNumberTrackingRequired">
+											<xs:annotation>
+												<xs:documentation>
+													Defines if Warehouse Management prompts the user for serials numbers, and when during the process.
+												</xs:documentation>
+											</xs:annotation>
+											<xs:simpleType>
+												<xs:restriction base="xs:string">
+													<xs:enumeration value="Not Required"/>
+													<xs:enumeration value="Track During Outbound Only"/>
+													<xs:enumeration value="Track During Inbound Only"/>
+													<xs:enumeration value="Full Tracking Required"/>
+												</xs:restriction>
+											</xs:simpleType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="internalActionFields" minOccurs="0">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="actionID">
+								<xs:annotation>
+									<xs:documentation>Uniquely identifies the create request. Internal Use Only.
+									</xs:documentation>
+								</xs:annotation>
+								<xs:simpleType>
+									<xs:restriction base="xs:string"> </xs:restriction>
+								</xs:simpleType>
+							</xs:element>
+							<xs:element name="actionDateTime">
+								<xs:annotation>
+									<xs:documentation>Identifies when the create request is raised.  Internal Use Only.
+									</xs:documentation>
+								</xs:annotation>
+								<xs:simpleType>
+									<xs:restriction base="xs:dateTime"> </xs:restriction>
+								</xs:simpleType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:complexType name="handlingUnitDimensions">
+		<xs:sequence>
+			<xs:element minOccurs="0" name="sizeDimensions">
+				<xs:annotation>
+					<xs:documentation>Dimensions being provided for the physical size of the Item at different handling levels</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="length">
+							<xs:simpleType>
+								<xs:restriction base="xs:decimal">
+									<xs:minExclusive value="0"/>
+									<xs:pattern value="[0-9]{1,8}[.][0-9]{2}"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+						<xs:element name="width">
+							<xs:simpleType>
+								<xs:restriction base="xs:decimal">
+									<xs:minExclusive value="0"/>
+									<xs:pattern value="[0-9]{1,8}[.][0-9]{2}"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+						<xs:element name="height">
+							<xs:simpleType>
+								<xs:restriction base="xs:decimal">
+									<xs:minExclusive value="0"/>
+									<xs:pattern value="[0-9]{1,8}[.][0-9]{2}"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+						<xs:element name="uom">
+							<xs:annotation>
+								<xs:documentation>Unit of Measure for the Dimensions.  Wincanton currently support Centimetre only</xs:documentation>
+							</xs:annotation>
+							<xs:simpleType>
+								<xs:restriction base="xs:string">
+									<xs:enumeration value="Centimetre"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element minOccurs="0" name="weightDimensions">
+				<xs:annotation>
+					<xs:documentation>Dimension being provided for the physical weight of the Item</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="weight">
+							<xs:simpleType>
+								<xs:restriction base="xs:decimal">
+									<xs:minExclusive value="0"/>
+									<xs:pattern value="[0-9]{1,8}[.][0-9]{4}"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+						<xs:element name="uom">
+							<xs:annotation>
+								<xs:documentation>Unit of Measure for the Weight.  Wincanton currently supports KGS and LBS only</xs:documentation>
+							</xs:annotation>
+							<xs:simpleType>
+								<xs:restriction base="xs:string">
+									<xs:enumeration value="KGS"/>
+									<xs:enumeration value="LBS"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element minOccurs="0" name="volumeDimensions">
+			<xs:annotation>
+				<xs:documentation>Dimension being provided for the physical volume of the Item</xs:documentation>
+			</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="volume">
+							<xs:simpleType>
+								<xs:restriction base="xs:decimal">
+									<xs:minExclusive value="0"/>
+									<xs:pattern value="[0-9]{1,10}[.][0-9]{4}"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+						<xs:element name="uom">
+							<xs:annotation>
+								<xs:documentation>Unit of Measure for the Volume.  Wincanton currently supports Millilitres and Cubic Centimetres only</xs:documentation>
+							</xs:annotation>
+							<xs:simpleType>
+								<xs:restriction base="xs:string">
+									<xs:enumeration value="Millilitres"/>
+									<xs:enumeration value="Cubic Centimetres"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>	
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="handlingUnitDetails">
+		<xs:sequence>
+			<xs:element name="unitQuantity">
+				<xs:annotation>
+					<xs:documentation>Number of Units of the Item for this Handling Unit Type.</xs:documentation>
+				</xs:annotation>
+				<xs:simpleType>
+					<xs:restriction base="xs:nonNegativeInteger">
+						<xs:minExclusive value="0"/>
+						<xs:maxInclusive value="9999999999999999"/>																
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element minOccurs="0" name="GTIN">
+				<xs:annotation>
+					<xs:documentation>GTIN Value for this Handling Unit Type.</xs:documentation>
+				</xs:annotation>
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:minLength value="1"/>
+						<xs:maxLength value="25"/>																
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>
+

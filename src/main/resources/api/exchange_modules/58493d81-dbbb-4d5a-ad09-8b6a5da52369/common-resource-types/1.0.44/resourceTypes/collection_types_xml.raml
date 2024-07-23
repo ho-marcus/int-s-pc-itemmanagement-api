@@ -1,0 +1,33 @@
+#%RAML 1.0 ResourceType
+
+    get?:
+      description: <<getDescription>>
+      responses:
+        200:
+          body:
+            application/xml:
+              type: <<getResponseType>>
+              example: <<getResponseExample>> 
+      is: [ success_200: {recordType: <<getResponseType>>, recordExample: <<getResponseExample>>}, 
+          err_400,err_401,err_404,err_405,err_406,err_407,err_415,err_500,err_503,err_504  ]
+    post?:      
+      description: <<postDescription>>
+      body:
+        application/xml:
+          type: <<postRequestType>>
+          example: <<postRequestExample>> 
+      is: [ success_201: {recordType: <<postResponseType>>, recordExample: <<postResponseExample_201>>},success_202: {recordExample: <<postResponseExample_202>>},err_400,err_401,err_404,err_405,err_406,err_407,err_415,err_500,err_503,err_504 ]
+    put?:      
+      description: <<putDescription>>
+      body:
+        application/xml:
+          type: <<putRequestType>>
+          example: <<putRequestExample>>      
+      is: [ success_200: {recordType: <<putResponseType>>, recordExample: <<putResponseExample>>},success_202: {recordExample: <<putResponseExample_202>>},nullvalue_204,err_400,err_401,err_404,err_405,err_406,err_415,err_500,err_503,err_504 ]
+    delete?:      
+      description: <<deleteDescription>> 
+      body:
+        application/xml:
+          type: <<deleteRequestType>>
+          example: <<deleteRequestExample>>  
+      is: [ success_200: {recordType: <<deleteResponseType>>, recordExample: <<deleteResponseExample>>},err_400,err_401,err_404,err_405,err_406,err_500,err_503,err_504 ]

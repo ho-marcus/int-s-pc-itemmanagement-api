@@ -1,0 +1,9 @@
+#%RAML 1.0 Trait
+    responses:
+      509:
+        description: This status code and error message will be returned when a client makes a request and a previous request for the resource has not been processed fully in WMS.  
+        body:
+          application/json:
+            type: !include ../definitions/commonFaultMessages.raml
+            example: !include ../examples/509.json
+      

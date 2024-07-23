@@ -1,0 +1,35 @@
+#%RAML 1.0 ResourceType
+
+    get?:
+      description: <<getDescription>>
+      is: [ success_200_xml: {recordType: <<getResponseTypeXML>>, recordExample: <<getResponseExampleXML_200>>}, success_200: {recordType: <<getResponseTypeJSON>>, recordExample: <<getResponseExampleJSON_200>>},err_400,err_401,err_404,err_405,err_406,err_407,err_500,err_501,err_503,err_504  ]
+    post?:      
+      description: <<postDescription>>
+      body:
+        application/xml:
+          type: <<postRequestTypeXML>>
+          example: <<postRequestExampleXML>>
+        application/json:
+          type: <<postRequestTypeJSON>>
+          example: <<postRequestExampleJSON>>
+      is: [success_201_xml: {recordType: <<postResponseTypeXML>>, recordExample: <<postResponseExampleXML_201>>}, success_201: {recordType: <<postResponseTypeJSON>>, recordExample: <<postResponseExampleJSON_201>>}, success_202_xml: {recordType: <<postResponseTypeXML>>, recordExample: <<postResponseExampleXML_202>>}, success_202: {recordType: <<postResponseTypeJSON>>, recordExample: <<postResponseExampleJSON_202>>}, err_400,err_401,err_404,err_405,err_406,err_407,err_415,err_500, err_501,err_503,err_504 ]    
+    put?:      
+      description: <<putDescription>>
+      body: 
+        application/xml:
+          type: <<putRequestTypeXML>>
+          example: <<putRequestExampleXML>>
+        application/json:
+          type: <<putRequestTypeJSON>>
+          example: <<putRequestExampleJSON>> 
+      is: [success_202_xml: {recordType: <<putResponseTypeXML>>, recordExample: <<putResponseExampleXML_202>>}, success_202: {recordType: <<putResponseTypeJSON>>, recordExample: <<putResponseExampleJSON_202>>},nullvalue_204,err_400,err_401,err_404,err_405,err_406,err_415,err_500,err_501,err_503,err_504,err_509]    
+    delete?:      
+      description: <<deleteDescription>>
+      body: 
+        application/xml:
+          type: <<deleteRequestTypeXML>>
+          example: <<deleteRequestExampleXML>>
+        application/json:
+          type: <<deleteRequestTypeJSON>>
+          example: <<deleteRequestExampleJSON>>     
+      is: [success_202_xml: {recordExample: <<deleteResponseExampleXML_202>>},success_202: {recordExample: <<deleteResponseExampleJSON_202>>}, nullvalue_204, err_400, err_401,err_404,err_405,err_406,err_415,err_500,err_501,err_503,err_504,err_509]

@@ -1,0 +1,14 @@
+#%RAML 1.0 ResourceType
+    description: This resource provides the life status of the API.
+    get: 
+      is: [ err_400,err_401,err_404,err_405,err_406,err_407,err_415,err_500,err_503,err_504 ]
+      responses:
+        200:
+          body:
+            application/json:
+              example: |
+                {
+                   "status": "OK",
+                   "version": "v1",
+                   "time": "2015-08-19T15:10:16Z"
+                }

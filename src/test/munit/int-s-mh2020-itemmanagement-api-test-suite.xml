@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:dbserver="http://www.mulesoft.org/schema/mule/dbserver"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:munit="http://www.mulesoft.org/schema/mule/munit"
+	xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd
+http://www.mulesoft.org/schema/mule/dbserver http://www.mulesoft.org/schema/mule/dbserver/current/mule-dbserver.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<munit:config name="int-s-mh2020-itemmanagement-api-test-suite.xml" />
+	<dbserver:config name="ITEM_CBO_Config" doc:name="MUnit DB Server Config" doc:id="ed516213-88a3-4756-a7ae-e0374522375a" >
+		<dbserver:connection csv="ITEM_CBO.csv" database="dummy_item_cbo" connectionStringParameters="Mode=Oracle" />
+	</dbserver:config>
+	<dbserver:config name="ITEMCBO_1_Config" doc:name="MUnit DB Server Config" doc:id="c8cd3964-5f90-499a-9706-e42f7b740e00" >
+		<dbserver:connection csv="ITEM_CBO_1.csv" database="dummy_item_cbo_1" connectionStringParameters="Mode=Oracle" />
+	</dbserver:config>
+	<db:config name="MUnit_Database_Config" doc:name="Database Config" doc:id="1dd81e8e-2adf-4da1-a53f-a5aca747c846" >
+		<db:generic-connection url="#[vars.dbUrl]" driverClassName="org.h2.Driver" />
+	</db:config>
+	<munit:before-suite name="create-tables-before-suite" doc:id="1c85e49e-7e7e-4076-aa9e-85c66c66b7a3" >
+		<set-variable value="jdbc:h2:tcp://localhost/mem:dummy_item_cbo" doc:name="db-url" doc:id="481fc19d-1bdc-46a9-81d1-dd3c98b0228a" variableName="dbUrl"/>
+		<db:execute-script doc:name="create-dummy-functions" doc:id="5d61772d-2a1b-4853-a71a-ef64931761ff" config-ref="MUnit_Database_Config">
+			<db:sql ><![CDATA[drop ALIAS if exists TO_CHAR; 
+CREATE ALIAS TO_CHAR as ' 
+import java.text.*; 
+@CODE 
+String toDate(String originalDate, String dateFormat) throws Exception { 
+    return originalDate; 
+}  
+';]]></db:sql>
+		</db:execute-script>
+		<db:execute-script doc:name="create-tables" doc:id="c6a78e07-8abe-4b3a-8e39-37e72b082d70" config-ref="MUnit_Database_Config">
+			<db:sql ><![CDATA[CREATE TABLE ITEM_FACILITY_MAPPING_WMS(
+FACILITY_ID VARCHAR2(100) NOT NULL,
+ITEM_ID number(9) NOT NULL
+);
+INSERT INTO ITEM_FACILITY_MAPPING_WMS (FACILITY_ID,ITEM_ID)
+VALUES ('01','1');]]></db:sql>
+		</db:execute-script>
+	</munit:before-suite>
+	<munit:test name="get-item-status-test-suite" doc:id="ec74024c-e13e-4e6f-819c-95efebe8ce1d" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="http-integration-services-system-get-client-info" doc:id="ba4e6950-ac6e-4d2f-82e1-35248efb60f9" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="GET" attributeName="method" />
+					<munit-tools:with-attribute whereValue="http-integration-services-system-get-client-info" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="aba14054-7d93-4142-9d27-79d19e036556" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="SYS_Integration_Services_HTTP_Request_configuration" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${system.integrationServices.getClientInfoPath}" attributeName="path" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[[&#10;  {&#10;    "DATAKEY": "BUSINESSUNIT",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "100"&#10;  },&#10;  {&#10;    "DATAKEY": "FACILITYID",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "01"&#10;  }&#10;]]' mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="http-integration-services-system-get-wmsdb-details" doc:id="b3bb714c-7ee0-4de7-9eff-df25f41f81aa" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="GET" attributeName="method" />
+					<munit-tools:with-attribute whereValue="http-integration-services-system-get-client-info" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="f10dbf99-5fd6-4f2d-b8cb-f5a7f37fee23" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="SYS_Integration_Services_HTTP_Request_configuration" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${system.integrationServices.getClientInfoPath}" attributeName="path" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[[{&#10;        "DATAKEY": "WM2020DBSERVER",&#10;        "CLIENTID": "F02101",&#10;        "DATAVALUE": "CWMST001.CLRB0TUEOGYC.EU-WEST-2.RDS.AMAZONAWS.COM"&#10;    },&#10;    {&#10;        "DATAKEY": "WM2020DBSID",&#10;        "CLIENTID": "F02101",&#10;        "DATAVALUE": "CWMST001"&#10;    },&#10;    {&#10;        "DATAKEY": "WM2020DBUSERNAME",&#10;        "CLIENTID": "F02101",&#10;        "DATAVALUE": "WM20TST02"&#10;    },&#10;    {&#10;        "DATAKEY": "WM2020DBPASSWORD",&#10;        "CLIENTID": "F02101",&#10;        "DATAVALUE": "Kindui9jk8s93jfC"&#10;    },&#10;    {&#10;        "DATAKEY": "WM2020DBLISTENERPORT",&#10;        "CLIENTID": "F02101",&#10;        "DATAVALUE": "1521"&#10;    }]]' mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="http-integration-services-system-get-record-status" doc:id="f3a42ff5-d5bb-4777-9882-be1bfbdf27fd" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="GET" attributeName="method" />
+					<munit-tools:with-attribute whereValue="http-integration-services-system-get-record-status" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="883437fd-1574-43d7-8afe-756734a8a6af" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="SYS_Integration_Services_HTTP_Request_configuration" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${system.integrationServices.getRecordStatusPath}" attributeName="path" />
+					<munit-tools:with-attribute whereValue="recordStatus" attributeName="target" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:variables >
+						<munit-tools:variable key="recordStatus" value="#[output application/json --- 'Active']" mediaType="application/json" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution>
+			<munit:set-event doc:name="itemCode-clientCode" doc:id="b397cd65-dc16-47c1-aff3-5face84e5b72">
+				<munit:attributes value='#[{&#10;	"uriParams":{"itemCode":"trial_item"},&#10;	"headers":{"clientCode":"P01101"}&#10;}]' />
+			</munit:set-event>
+			<set-variable value="jdbc:h2:tcp://localhost/mem:dummy_item_cbo" doc:name="db-url" doc:id="3363dff9-85f8-49f3-84b4-dcd6a7d2828e" variableName="dbUrl" />
+			<flow-ref doc:name="get-item-flow-ref" doc:id="d9fe9fa2-289d-4e61-9531-f14498061a63" name="get:\item\(itemCode)\status:int-s-mh2020-itemmanagement-api-config" />
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-equals doc:name="validate-item-id" doc:id="d683496d-987a-40ac-98eb-701d31068774" actual="#[output application/json ---&#10;payload.wincantonStandardWMSItemStatusResponse.wincantonStandardWMSItemStatus.itemCode]" expected="trial_item"/>
+		</munit:validation>
+	</munit:test>
+	
+	<munit:test name="get-item-status-error-not-foun-in-wms-status-desc-test-suite" doc:id="a66b42aa-a5e5-41ee-a421-f7c7d7bbab9b" description="Test" expectedErrorType="DB:NOT_FOUND">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="http-integration-services-system-get-client-info" doc:id="a53d95e3-78f9-44e0-b3cc-d5e0dd283eea" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="GET" attributeName="method" />
+					<munit-tools:with-attribute whereValue="http-integration-services-system-get-client-info" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="aba14054-7d93-4142-9d27-79d19e036556" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="SYS_Integration_Services_HTTP_Request_configuration" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${system.integrationServices.getClientInfoPath}" attributeName="path" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[[&#10;  {&#10;    "DATAKEY": "BUSINESSUNIT",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "100"&#10;  },&#10;  {&#10;    "DATAKEY": "FACILITYID",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "01"&#10;  }&#10;]]' mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="http-integration-services-system-get-record-status" doc:id="d9bbaf98-7002-44c0-9439-496b4bf14230" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="GET" attributeName="method" />
+					<munit-tools:with-attribute whereValue="http-integration-services-system-get-record-status" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="883437fd-1574-43d7-8afe-756734a8a6af" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="SYS_Integration_Services_HTTP_Request_configuration" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${system.integrationServices.getRecordStatusPath}" attributeName="path" />
+					<munit-tools:with-attribute whereValue="recordStatus" attributeName="target" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:attributes value='#[[{&#10;        "DATAKEY": "WM2020DBSERVER",&#10;        "CLIENTID": "F02101",&#10;        "DATAVALUE": "CWMST001.CLRB0TUEOGYC.EU-WEST-2.RDS.AMAZONAWS.COM"&#10;    },&#10;    {&#10;        "DATAKEY": "WM2020DBSID",&#10;        "CLIENTID": "F02101",&#10;        "DATAVALUE": "CWMST001"&#10;    },&#10;    {&#10;        "DATAKEY": "WM2020DBUSERNAME",&#10;        "CLIENTID": "F02101",&#10;        "DATAVALUE": "WM20TST02"&#10;    },&#10;    {&#10;        "DATAKEY": "WM2020DBPASSWORD",&#10;        "CLIENTID": "F02101",&#10;        "DATAVALUE": "Kindui9jk8s93jfC"&#10;    },&#10;    {&#10;        "DATAKEY": "WM2020DBLISTENERPORT",&#10;        "CLIENTID": "F02101",&#10;        "DATAVALUE": "1521"&#10;    }]]' mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution>
+			<munit:set-event doc:name="itemCode-clientCode" doc:id="97de6255-5c2b-43f3-8ddd-3f0b125a6341">
+				<munit:attributes value='#[{&#10;	"uriParams":{"itemCode":"trial_item"},&#10;	"headers":{"clientCode":"P01101"}&#10;}]' />
+			</munit:set-event>
+			<set-variable value="jdbc:h2:tcp://localhost/mem:dummy_item_cbo" doc:name="db-url" doc:id="984d67ed-8530-43e1-9235-7bc073a5ec45" variableName="dbUrl" />
+			<flow-ref doc:name="get-item-flow-ref" doc:id="51a3d7a5-b37c-47fd-b00b-62c3dc12dbf9" name="get:\item\(itemCode)\status:int-s-mh2020-itemmanagement-api-config" />
+		</munit:execution>
+	</munit:test>
+		<munit:test name="integration-services-server-error-test-suite" doc:id="3596ae5d-9d66-43be-88d9-52c8ed931ff0" description="Test" expectedErrorType="BUSINESS:SERVER_ERROR">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="http-integration-services-system-get-client-info" doc:id="f3a3d8b6-1fe0-4c4c-aaaf-1d54622211d1" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="GET" attributeName="method" />
+					<munit-tools:with-attribute whereValue="http-integration-services-system-get-client-info" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="aba14054-7d93-4142-9d27-79d19e036556" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="SYS_Integration_Services_HTTP_Request_configuration" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${system.integrationServices.getClientInfoPath}" attributeName="path" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[[&#10;  {&#10;    "DATAKEY": "",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "100"&#10;  },&#10;  {&#10;    "DATAKEY": "FACILITYID",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "01"&#10;  }&#10;]]' mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			
+</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution>
+			<munit:set-event doc:name="itemCode-clientCode" doc:id="0521d4ca-fe3b-4eb0-9fe6-e93da56951fa">
+				<munit:attributes value='#[{&#10;	"uriParams":{"itemCode":"trial_item"},&#10;	"headers":{"clientCode":"P01101"}&#10;}]' />
+			</munit:set-event>
+			<set-variable value="jdbc:h2:tcp://localhost/mem:dummy_item_cbo" doc:name="db-url" doc:id="b59c60c0-8eb2-42c3-b9e2-91b6c837995d" variableName="dbUrl" />
+			<flow-ref doc:name="get-item-flow-ref" doc:id="898aa72d-26ec-4351-8b86-4a05eb7ab1fd" name="get:\item\(itemCode)\status:int-s-mh2020-itemmanagement-api-config" />
+		</munit:execution>
+	</munit:test>
+	
+	<munit:test name="get-item-status-error-not-found-item-cbo-test-suite" doc:id="b4d6e600-21f4-4c38-989c-f5cadb07d156" description="Test" expectedErrorType="BUSINESS:SERVER_ERROR">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="http-integration-services-system-get-client-info" doc:id="66fb6dee-69cf-4794-a98c-e2965b570c5f" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="GET" attributeName="method" />
+					<munit-tools:with-attribute whereValue="http-integration-services-system-get-client-info" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="aba14054-7d93-4142-9d27-79d19e036556" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="SYS_Integration_Services_HTTP_Request_configuration" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${system.integrationServices.getClientInfoPath}" attributeName="path" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[[&#10;  {&#10;    "DATAKEY": "BUSINESSUNIT",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "100"&#10;  },&#10;  {&#10;    "DATAKEY": "FACILITYID",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "01"&#10;  }&#10;]]' mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="http-integration-services-system-get-wmsdb-details" doc:id="5cd7c310-706d-4fb1-9e76-46b5dba8e93f" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="GET" attributeName="method" />
+					<munit-tools:with-attribute whereValue="http-integration-services-system-get-client-info" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="f10dbf99-5fd6-4f2d-b8cb-f5a7f37fee23" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="SYS_Integration_Services_HTTP_Request_configuration" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${system.integrationServices.getClientInfoPath}" attributeName="path" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[[{&#10;        "DATAKEY": "WM2020DBSERVER",&#10;        "CLIENTID": "F02101",&#10;        "DATAVALUE": "CWMST001.CLRB0TUEOGYC.EU-WEST-2.RDS.AMAZONAWS.COM"&#10;    },&#10;    {&#10;        "DATAKEY": "WM2020DBSID",&#10;        "CLIENTID": "F02101",&#10;        "DATAVALUE": ""&#10;    },&#10;    {&#10;        "DATAKEY": "WM2020DBUSERNAME",&#10;        "CLIENTID": "F02101",&#10;        "DATAVALUE": "WM20TST02"&#10;    },&#10;    {&#10;        "DATAKEY": "WM2020DBPASSWORD",&#10;        "CLIENTID": "F02101",&#10;        "DATAVALUE": "Kindui9jk8s93jfC"&#10;    },&#10;    {&#10;        "DATAKEY": "WM2020DBLISTENERPORT",&#10;        "CLIENTID": "F02101",&#10;        "DATAVALUE": "1521"&#10;    }]]' mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution>
+			<munit:set-event doc:name="itemCode-clientCode" doc:id="07d005ab-caf4-4d40-89a4-d426a23fb899">
+				<munit:attributes value='#[{&#10;	"uriParams":{"itemCode":"trialitem"},&#10;	"headers":{"clientCode":"P01101"}&#10;}]' />
+
+			</munit:set-event>
+			<set-variable value="jdbc:h2:tcp://localhost/mem:dummy_item_cbo" doc:name="db-url" doc:id="a2556987-93de-44b6-b0ce-0ee6ff220a88" variableName="dbUrl" />
+			<flow-ref doc:name="get-item-flow-ref" doc:id="e6c7f946-1a20-4c8a-bd15-09d4d8a143bd" name="get:\item\(itemCode)\status:int-s-mh2020-itemmanagement-api-config" />
+		</munit:execution>
+	</munit:test>
+	
+	
+	<munit:test name="creating-items-test-suite" doc:id="02362370-f08c-4b28-aa9e-4c180240d3b9" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="http-integration-services-system-get-client-info" doc:id="5df9dc52-802e-4216-bfea-e682252436b6" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="GET" attributeName="method" />
+					<munit-tools:with-attribute whereValue="http-integration-services-system-get-client-info" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="aba14054-7d93-4142-9d27-79d19e036556" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="SYS_Integration_Services_HTTP_Request_configuration" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${system.integrationServices.getClientInfoPath}" attributeName="path" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[[&#10;  {&#10;    "DATAKEY": "BUSINESSUNIT",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "100"&#10;  },&#10;  {&#10;    "DATAKEY": "FACILITYID",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "01"&#10;  }&#10;]]' mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="http-integration-services-system-get-client-info-sftp" doc:id="0670f87a-19ec-4341-a7c0-8953a9bcc2f6" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="GET" attributeName="method" />
+					<munit-tools:with-attribute whereValue="http-integration-services-system-get-client-info" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="a3126748-d20d-429a-b3f0-e533cbf716bc" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="SYS_Integration_Services_HTTP_Request_configuration" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${system.integrationServices.getClientInfoPath}" attributeName="path" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[[&#10;  {&#10;    "DATAKEY": "WMSDESTINATIONFOLDER",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "/manh_cwms2/interfaces/in102"&#10;  },&#10;  {&#10;    "DATAKEY": "WMSSFTPHOST",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "lbapp-ew2-mulesftp-t101-069f08f2c529c5f2.elb.eu-west-2.amazonaws.com"&#10;  },&#10;  {&#10;    "DATAKEY": "WMSSFTPPASSWORD",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "wm_cwms2"&#10;  },&#10;  {&#10;    "DATAKEY": "WMSSFTPPORT",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "22"&#10;  },&#10;  {&#10;    "DATAKEY": "WMSSFTPUSER",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "wm_cwms2"&#10;  }&#10;]]' mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="write-sftp" doc:id="5f062ea1-9c59-4ef8-93df-1f5d00a13a91" processor="sftp:write">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="write-to-manhattan-sftp" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="87659f50-fc81-4926-8c97-fdc2d96ae554" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="MH_SFTP-config" attributeName="config-ref" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="examplePayload-clientCode" doc:id="241fc8d1-84ff-45f2-895d-4bda2cbfc9ad" >
+				<munit:payload value='#[MunitTools::getResourceAsString("example-item-create.xml")]' />
+				<munit:attributes value='#[{&#10;	&#10;	"headers":{"clientCode":"P01101"}&#10;}]' />
+			</munit:set-event>
+			<ee:transform doc:name="transform-into-xml" doc:id="73c89ad0-c102-42d4-a498-2d2a2de5498b" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+---
+read(payload, "application/xml")]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="create-item-flow-reference" doc:id="66c4d0d8-938e-4d36-a82c-ce20458b277a" name="post:\item:application\xml:int-s-mh2020-itemmanagement-api-config"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-equals doc:name="validate-response-messagge" doc:id="6b807922-aed8-4d60-92bc-1f61362aeafe" actual="#[payload.message]" expected="The item 12356503 was created successfully"/>
+		</munit:validation>
+	</munit:test>
+	
+	
+	<munit:test name="update-items-test-suite" doc:id="1d2978a5-e302-4179-9931-0d3f189c6f98" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="http-integration-services-system-get-client-info" doc:id="d88652f6-fc5f-4e6b-ad29-86624144ca68" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="GET" attributeName="method" />
+					<munit-tools:with-attribute whereValue="http-integration-services-system-get-client-info" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="aba14054-7d93-4142-9d27-79d19e036556" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="SYS_Integration_Services_HTTP_Request_configuration" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${system.integrationServices.getClientInfoPath}" attributeName="path" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[[&#10;  {&#10;    "DATAKEY": "BUSINESSUNIT",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "100"&#10;  },&#10;  {&#10;    "DATAKEY": "FACILITYID",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "01"&#10;  }&#10;]]' mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="http-integration-services-system-get-client-info-sftp" doc:id="183ee145-f66a-427c-b1c4-e23ffc38eff7" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="GET" attributeName="method" />
+					<munit-tools:with-attribute whereValue="http-integration-services-system-get-client-info" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="a3126748-d20d-429a-b3f0-e533cbf716bc" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="SYS_Integration_Services_HTTP_Request_configuration" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${system.integrationServices.getClientInfoPath}" attributeName="path" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[[&#10;  {&#10;    "DATAKEY": "WMSDESTINATIONFOLDER",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "/manh_cwms2/interfaces/in101"&#10;  },&#10;  {&#10;    "DATAKEY": "WMSSFTPHOST",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "lbapp-ew2-mulesftp-t101-069f08f2c529c5f2.elb.eu-west-2.amazonaws.com"&#10;  },&#10;  {&#10;    "DATAKEY": "WMSSFTPPASSWORD",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "wm_cwms2"&#10;  },&#10;  {&#10;    "DATAKEY": "WMSSFTPPORT",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "22"&#10;  },&#10;  {&#10;    "DATAKEY": "WMSSFTPUSER",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "wm_cwms2"&#10;  }&#10;]]' mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="write-sftp" doc:id="69308a4a-5686-44d5-8247-a3f18bd90ce1" processor="sftp:write">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="write-to-manhattan-sftp" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="32a3efeb-678f-43c0-a6c3-b6dbeab2cc4c" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="MH_SFTP-config" attributeName="config-ref" />
+				</munit-tools:with-attributes>
+
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="examplePayload-clientCode" doc:id="cae6ad44-20d4-44b5-bd37-653ec99b7d2c" >
+				<munit:payload value='#[MunitTools::getResourceAsString("example-item-create.xml")]' />
+				<munit:attributes value='#[{&#10;	"uriParams":{"itemCode":"trialitem"},&#10;	"headers":{"clientCode":"P01101"}&#10;}]' />
+			
+</munit:set-event>
+			<ee:transform doc:name="transform-into-xml" doc:id="257eb569-9b1e-4bf5-b00a-77c85e29c3e9" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+---
+read(payload, "application/xml")]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="update-item-flow-reference" doc:id="8b750df4-b66d-43dd-925d-041c6b43b8d4" name="put:\item\(itemCode):application\xml:int-s-mh2020-itemmanagement-api-config"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-equals doc:name="validate-response-message" doc:id="4dbcf958-c688-470a-a74a-a16e42934e30" actual="#[payload.message]" expected="The item trialitem was updated successfully"/>
+		</munit:validation>
+	</munit:test>
+	
+	
+	
+		<munit:test name="delete-items-test-suite" doc:id="a96af1ee-7aff-4d27-b880-f7661e7c160c" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="http-integration-services-system-get-client-info" doc:id="f694ee66-8c38-4274-a7d6-989dd6aaa1bb" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="GET" attributeName="method" />
+					<munit-tools:with-attribute whereValue="http-integration-services-system-get-client-info" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="aba14054-7d93-4142-9d27-79d19e036556" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="SYS_Integration_Services_HTTP_Request_configuration" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${system.integrationServices.getClientInfoPath}" attributeName="path" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[[&#10;  {&#10;    "DATAKEY": "BUSINESSUNIT",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "100"&#10;  },&#10;  {&#10;    "DATAKEY": "FACILITYID",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "01"&#10;  }&#10;]]' mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="http-integration-services-system-get-client-info-sftp" doc:id="e7f0a770-ee9c-4f74-a01b-d572ec833620" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="GET" attributeName="method" />
+					<munit-tools:with-attribute whereValue="http-integration-services-system-get-client-info" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="a3126748-d20d-429a-b3f0-e533cbf716bc" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="SYS_Integration_Services_HTTP_Request_configuration" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${system.integrationServices.getClientInfoPath}" attributeName="path" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[[&#10;  {&#10;    "DATAKEY": "WMSDESTINATIONFOLDER",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "/manh_cwms2/interfaces/in101"&#10;  },&#10;  {&#10;    "DATAKEY": "WMSSFTPHOST",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "lbapp-ew2-mulesftp-t101-069f08f2c529c5f2.elb.eu-west-2.amazonaws.com"&#10;  },&#10;  {&#10;    "DATAKEY": "WMSSFTPPASSWORD",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "wm_cwms2"&#10;  },&#10;  {&#10;    "DATAKEY": "WMSSFTPPORT",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "22"&#10;  },&#10;  {&#10;    "DATAKEY": "WMSSFTPUSER",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "wm_cwms2"&#10;  }&#10;]]' mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="write-sftp" doc:id="133bf3b1-5a07-4761-906f-a9ce43525942" processor="sftp:write">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="write-to-manhattan-sftp" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="d3685476-e97b-4997-9fbf-ebfd2cdaf292" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="MH_SFTP-config" attributeName="config-ref" />
+				</munit-tools:with-attributes>
+
+
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="examplePayload-clientCode" doc:id="55312a36-fb21-4d17-97d1-ac52a4687935" >
+				<munit:payload value='#[MunitTools::getResourceAsString("example-item-create.xml")]' />
+				<munit:attributes value='#[{&#10;	"uriParams":{"itemCode":"trialitem"},&#10;	"headers":{"clientCode":"P01101"}&#10;}]' />
+			
+</munit:set-event>
+			<ee:transform doc:name="transform-into-xml" doc:id="9973bdff-9c23-4a78-a727-640bef700086" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+---
+read(payload, "application/xml")]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="delete-item-flow-reference" doc:id="7dd79a11-d715-4c9f-9162-bec88c31dde5" name="delete:\item\(itemCode):application\xml:int-s-mh2020-itemmanagement-api-config"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-equals doc:name="validate-response-message" doc:id="d0a97d00-155f-4569-a186-11572208171d" actual="#[payload.message]" expected="The item trialitem was cancelled successfully"/>
+		</munit:validation>
+	</munit:test>
+
+
+		<munit:test name="integration-services-sftp-server-error-test-suite" doc:id="fbc325b0-9180-4859-b66d-ce7e6a89c98f" description="Test" expectedErrorType="BUSINESS:SERVER_ERROR">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="http-integration-services-system-get-client-info" doc:id="db2ea778-e227-4515-8704-5b3b43c55508" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="GET" attributeName="method" />
+					<munit-tools:with-attribute whereValue="http-integration-services-system-get-client-info" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="aba14054-7d93-4142-9d27-79d19e036556" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="SYS_Integration_Services_HTTP_Request_configuration" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${system.integrationServices.getClientInfoPath}" attributeName="path" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[[&#10;  {&#10;    "DATAKEY": "BUSINESSUNIT",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "100"&#10;  },&#10;  {&#10;    "DATAKEY": "FACILITYID",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "01"&#10;  }&#10;]]' mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="http-integration-services-system-get-client-info-sftp" doc:id="1a328a48-76fb-4fbf-8be5-b597e6217417" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="GET" attributeName="method" />
+					<munit-tools:with-attribute whereValue="http-integration-services-system-get-client-info" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="a3126748-d20d-429a-b3f0-e533cbf716bc" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="SYS_Integration_Services_HTTP_Request_configuration" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${system.integrationServices.getClientInfoPath}" attributeName="path" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[[&#10;  {&#10;    "DATAKEY": "WMSDESTINATIONFOLDER",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "/manh_cwms2/interfaces/in101"&#10;  },&#10;  {&#10;    "DATAKEY": "WMSSFTPHOST",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "lbapp-ew2-mulesftp-t101-069f08f2c529c5f2.elb.eu-west-2.amazonaws.com"&#10;  },&#10;  {&#10;    "DATAKEY": "WMSSFTPPASSWORD",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "wm_cwms2"&#10;  },&#10;  {&#10;    "DATAKEY": "WMSSFTPPORT",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": "22"&#10;  },&#10;  {&#10;    "DATAKEY": "WMSSFTPUSER",&#10;    "CLIENTID": "P01101",&#10;    "DATAVALUE": ""&#10;  }&#10;]]' mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			
+</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="examplePayload-clientCode" doc:id="aeda1176-d0fa-4565-8cb1-3306df86b609" >
+				<munit:payload value='#[MunitTools::getResourceAsString("example-item-create.xml")]' />
+				<munit:attributes value='#[{&#10;	"uriParams":{"itemCode":"trialitem"},&#10;	"headers":{"clientCode":"P01101"}&#10;}]' />
+			
+</munit:set-event>
+			<ee:transform doc:name="transform-into-xml" doc:id="2fe13b77-1255-40ad-b0b6-0d6ed142e39a" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+---
+read(payload, "application/xml")]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="delete-item-flow-reference" doc:id="91bffbda-1430-48bb-a7bf-dedb89f0860a" name="delete:\item\(itemCode):application\xml:int-s-mh2020-itemmanagement-api-config"/>
+		</munit:execution>
+	</munit:test>
+	
+
+
+</mule>

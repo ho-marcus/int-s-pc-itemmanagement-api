@@ -1,0 +1,8 @@
+#%RAML 1.0 Trait
+    responses:
+      401:
+        description: This status code and error message will be returned in case if no credentials are provided or the provided credentials are refused
+        body:
+          application/json:
+            type: !include ../definitions/commonFaultMessages.raml
+            example: !include ../examples/401.json

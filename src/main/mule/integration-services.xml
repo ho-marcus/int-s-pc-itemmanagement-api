@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<sub-flow name="get-client-information" doc:id="c4e81289-1dd3-43b7-bdd9-84c3d06f81f5" >
+		<json-logger:logger doc:name="debug-logger-get-client-information" doc:id="b8e389ab-c3e4-455b-8ed4-12b336849680" config-ref="JSON_Logger_Config" message="In the Get Client Information subflow" priority="DEBUG" category="support"/>
+		<set-variable value='#[output application/json&#10;---&#10;"Get client information for client " ++ vars.clientCode]' doc:name="eventName" doc:id="a99c9f6f-9c20-46a3-a9ca-e07b389ee976" variableName="eventName" />
+		<until-successful maxRetries="${retry.numOfRetries}" doc:name="Until Successful" doc:id="5594cc05-9506-45b8-bec2-0e34f6121483" millisBetweenRetries="${retry.milliseconds}" >
+			<http:request method="GET" doc:name="http-integration-services-system-get-client-info" doc:id="aba14054-7d93-4142-9d27-79d19e036556" config-ref="SYS_Integration_Services_HTTP_Request_configuration" path="${system.integrationServices.getClientInfoPath}" >
+				<error-mapping sourceType="HTTP:NOT_FOUND" targetType="BUSINESS:NOT_FOUND" />
+				<http:headers ><![CDATA[#[output application/json
+---
+{	"CONTEXT-ID" : vars.contextID,
+	"X-CORRELATION-ID": correlationId,
+	client_id: p('secure::system.integrationServices.clientID'),
+	client_secret: p('secure::system.integrationServices.clientSecret')
+}]]]></http:headers>
+				<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	clientCode : vars.clientCode
+}]]]></http:uri-params>
+				<http:query-params ><![CDATA[#[output application/java
+---
+{
+	dataKey : "FACILITYID','BUSINESSUNIT"
+}]]]></http:query-params>
+			</http:request>
+		</until-successful>
+		<ee:transform doc:name="get-businessUnit-and-facilityID" doc:id="400735b2-1feb-4893-93ff-d33894a2059f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    (payload[0].DATAKEY): (payload[0].DATAVALUE),
+    (payload[1].DATAKEY): (payload[1].DATAVALUE),
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables />
+		</ee:transform>
+		<ee:transform doc:name="set-businessUnit-and-facilityID" doc:id="5b202c8e-f42f-4e56-9315-e6904a967332" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	businessUnit: payload.BUSINESSUNIT,
+	facilityID: payload.FACILITYID
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="debug-logger-businessUnit-and-facilityID" doc:id="6801dfa6-d251-44ac-a5b9-b92d11224fd2" config-ref="JSON_Logger_Config" message="Business Unit and Facility" priority="DEBUG" category="support"/>
+		<choice doc:name="businessUnit-and-facilityID-exist?" doc:id="bfdde2c8-1370-421c-a6ff-091c86b616c9" >
+			<when expression="#[isEmpty(payload.businessUnit) or isEmpty(payload.facilityID)]" >
+				<json-logger:logger doc:name="debug-logger-business-unit-and/or-facility-id-not-available" doc:id="3d71e84a-7c01-4eea-97fe-557084eaaffe" config-ref="JSON_Logger_Config" message="Business Unit and/or Facility ID not available" priority="DEBUG" category="support"/>
+				<raise-error doc:name="BUSINESS:SERVER_ERROR" doc:id="d1e64a26-5233-43c1-b26a-40a0f8dfbca5" type="BUSINESS:SERVER_ERROR" description="Business Unit and/or Facility ID not available" />
+			</when>
+			<otherwise >
+				<json-logger:logger doc:name="debug-logger-continue" doc:id="d9d9aae8-343e-43fd-9e77-85143b0c2130" config-ref="JSON_Logger_Config" message="Business Unit and Facility ID available" priority="DEBUG" category="support"/>
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="get-sftp-details" doc:id="00a6e5c5-ba66-4cfb-9e88-31c17efc8d44" >
+		<json-logger:logger doc:name="debug-logger-get-sftp-details" doc:id="e59d2310-0625-49ae-b0c6-bd38c34ac3c1" config-ref="JSON_Logger_Config" message="In the Get SFTP details subflow" priority="DEBUG" category="support"/>
+		<set-variable value='#[output application/json&#10;---&#10;"Get SFTP details for client " ++ vars.clientCode]' doc:name="eventName" doc:id="5f1b139f-ba48-431e-88a5-b92d70006eff" variableName="eventName" />
+		<until-successful maxRetries="${retry.numOfRetries}" doc:name="Until Successful" doc:id="1e124b4e-4218-4090-b21e-9e0a448d4203" millisBetweenRetries="${retry.milliseconds}" >
+			<http:request method="GET" doc:name="http-integration-services-system-get-client-info" doc:id="a3126748-d20d-429a-b3f0-e533cbf716bc" config-ref="SYS_Integration_Services_HTTP_Request_configuration" path="${system.integrationServices.getClientInfoPath}" >
+				<error-mapping sourceType="HTTP:NOT_FOUND" targetType="BUSINESS:NOT_FOUND" />
+				<http:headers ><![CDATA[#[output application/json
+---
+{	"CONTEXT-ID" : vars.contextID,
+	"X-CORRELATION-ID": correlationId,
+	client_id: p('secure::system.integrationServices.clientID'),
+	client_secret: p('secure::system.integrationServices.clientSecret')
+}]]]></http:headers>
+				<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	clientCode : vars.clientCode
+}]]]></http:uri-params>
+				<http:query-params ><![CDATA[#[output application/java
+---
+{
+	dataKey : "WMSDESTINATIONFOLDER', 'WMSSFTPPASSWORD','WMSSFTPUSER', 'WMSSFTPPORT', 'WMSSFTPHOST"
+}]]]></http:query-params>
+			</http:request>
+		</until-successful>
+		<ee:transform doc:name="get-sftp-details" doc:id="687132ef-2689-490a-a022-2009e75e8214" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    (payload[0].DATAKEY): (payload[0].DATAVALUE),
+    (payload[1].DATAKEY): (payload[1].DATAVALUE),
+    (payload[2].DATAKEY): (payload[2].DATAVALUE),
+    (payload[3].DATAKEY): (payload[3].DATAVALUE),
+    (payload[4].DATAKEY): (payload[4].DATAVALUE)
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables />
+		</ee:transform>
+		<ee:transform doc:name="set-sftp-details" doc:id="e05925e4-8b6d-4323-b6da-e4e30b228a2b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	sftpHost: payload.WMSSFTPHOST,
+	sftpPort: payload.WMSSFTPPORT,
+	sftpUser: payload.WMSSFTPUSER,
+	sftpPassword: payload.WMSSFTPPASSWORD,
+	sftpDestinationFolder: payload.WMSDESTINATIONFOLDER
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="debug-logger-sftp-details" doc:id="68560f26-cb3b-4055-9ed5-32a8fb944164" config-ref="JSON_Logger_Config" message="SFTP Details" priority="DEBUG" category="support"/>
+		<choice doc:name="sftp-details-exist?" doc:id="5e117f4d-90af-4998-8965-0509374a57ae" >
+			<when expression="#[isEmpty(payload.sftpHost) or isEmpty(payload.sftpPort) or isEmpty(payload.sftpUser) or isEmpty(payload.sftpPassword) or isEmpty(payload.sftpDestinationFolder)]" >
+				<json-logger:logger doc:name="debug-logger-sftp-details-not-available" doc:id="6ab4ffbf-be5d-4e98-8234-15b4b0c79761" config-ref="JSON_Logger_Config" message="SFTP details not available" priority="DEBUG" category="support"/>
+				<raise-error doc:name="BUSINESS:SERVER_ERROR" doc:id="4ab40524-129c-4566-89ba-239184ed947b" type="BUSINESS:SERVER_ERROR" description="SFTP details not available" />
+			</when>
+			<otherwise >
+				<json-logger:logger doc:name="debug-logger-continue" doc:id="3302ce4d-7e79-4c25-963c-00f76eb2e1cc" config-ref="JSON_Logger_Config" message="SFTP details available" priority="DEBUG" category="support"/>
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="get-wmsdb-details" doc:id="4bced1d2-4685-4f4e-9974-2066edd02616" >
+		<json-logger:logger doc:name="debug-logger-get-wmsdb-details" doc:id="68d2b7dd-4f2d-4ac8-822c-4c5b45c31a1c" config-ref="JSON_Logger_Config" message='#["In the Get WMS DB details subflow"]' priority="DEBUG" category="support">
+			<json-logger:content><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    payload: JSONLoggerModule::stringifyNonJSON(payload) 
+}]]]></json-logger:content>
+		</json-logger:logger>
+		<set-variable value='#[output application/json&#10;---&#10;"Get WMSDB details for client " ++ vars.clientCode]' doc:name="eventName" doc:id="49054241-5ad6-4b8e-afee-981b873d6a80" variableName="eventName" />
+		<until-successful maxRetries="${retry.numOfRetries}" doc:name="Until Successful" doc:id="1a21b662-92df-4324-85f1-60085916031b" millisBetweenRetries="${retry.milliseconds}">
+			<http:request method="GET" doc:name="http-integration-services-system-get-client-info" doc:id="f10dbf99-5fd6-4f2d-b8cb-f5a7f37fee23" config-ref="SYS_Integration_Services_HTTP_Request_configuration" path="${system.integrationServices.getClientInfoPath}">
+					<error-mapping sourceType="HTTP:NOT_FOUND" targetType="BUSINESS:NOT_FOUND" />
+				<http:headers><![CDATA[#[output application/json
+---
+{	"CONTEXT-ID" : vars.contextID,
+	"X-CORRELATION-ID": correlationId,
+	client_id: p('secure::system.integrationServices.clientID'),
+	client_secret: p('secure::system.integrationServices.clientSecret')
+}]]]></http:headers>
+			<http:uri-params><![CDATA[#[output application/java
+---
+{
+	clientCode : vars.clientCode
+}]]]></http:uri-params>
+			<http:query-params><![CDATA[#[output application/java
+---
+{
+	dataKey : "WM2020DBSERVER','WM2020DBSID','WM2020DBUSERNAME','WM2020DBPASSWORD','WM2020DBLISTENERPORT"
+}]]]></http:query-params>
+		</http:request>
+		</until-successful>
+		<ee:transform doc:name="get-wmsdb-details" doc:id="6d74883e-7ea4-4ec7-b65f-b1de18df6fd5">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    (payload[0].DATAKEY): (payload[0].DATAVALUE),
+    (payload[1].DATAKEY): (payload[1].DATAVALUE),
+    (payload[2].DATAKEY): (payload[2].DATAVALUE),
+    (payload[3].DATAKEY): (payload[3].DATAVALUE),
+    (payload[4].DATAKEY): (payload[4].DATAVALUE)
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables />
+		</ee:transform>
+		<ee:transform doc:name="set-wmsdb-details" doc:id="b09212b2-d2c5-4f51-a2d5-b707722d56b0">
+			<ee:message>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="wmsdb" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	dbServer: payload.WM2020DBSERVER,
+	dbsid: payload.WM2020DBSID,
+	dbUser: payload.WM2020DBUSERNAME,
+	dbPassword: payload.WM2020DBPASSWORD,
+	dbPort: payload.WM2020DBLISTENERPORT
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<json-logger:logger doc:name="debug-logger-wmsdb-details" doc:id="15362a12-36a5-4cd2-901a-5bd8828d3c00" config-ref="JSON_Logger_Config" message="WMS MHDB Details" priority="DEBUG" category="support" />
+		<choice doc:name="check-dbvalues-exists?" doc:id="172a065d-7dbd-4e40-996e-a889cc3a83b0">
+			<when expression='#[isEmpty(vars.wmsdb.dbServer) or isEmpty(vars.wmsdb.dbPort) or isEmpty(vars.wmsdb.dbUser) or isEmpty(vars.wmsdb.dbPassword) or isEmpty(vars.wmsdb.dbsid)]'>
+				<json-logger:logger doc:name="debug-logger-wmsdb-details-not-available" doc:id="fc153a86-d957-40fe-8b72-e76244d6794f" config-ref="JSON_Logger_Config" message='#["WMS MH DB details are not available"]' priority="DEBUG" category="support">
+					<json-logger:content ><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+	payload: JSONLoggerModule::stringifyNonJSON(payload) 
+}]]]></json-logger:content>
+				</json-logger:logger>
+				<raise-error doc:name="BUSINESS:SERVER_ERROR" doc:id="c81a50f8-f2a2-4b76-a10c-341cd92e087e" description="WMS MH DB details are not available" type="BUSINESS:SERVER_ERROR" />
+			</when>
+			<otherwise >
+				<json-logger:logger doc:name="debug-logger-continue" doc:id="43535a85-6e5e-4398-8b5c-22aa97f162f9" config-ref="JSON_Logger_Config" message='#["Received WMS MHDB values from ISDB"]' priority="DEBUG" category="support" >
+					<json-logger:content ><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+	payload: JSONLoggerModule::stringifyNonJSON(payload) 
+}]]]></json-logger:content>
+				</json-logger:logger>
+			</otherwise>
+		</choice>
+	</sub-flow>
+</mule>

@@ -1,0 +1,15 @@
+#%RAML 1.0 SecurityScheme
+type: x-client-id-secret
+description: Apply this to any API that needs to enforce client ID Authentication.
+describedBy:
+  headers:
+    client_id:
+      description: The client_id of the API consumer/requester
+      type: string
+      required: true
+      example: a934bnj3n45ou5i7nln443b54b
+    client_secret:
+      description: The client_secret of the API consumer/requester
+      type: string
+      required: true
+      example: kjihi56b1212vghc35b34kb45k

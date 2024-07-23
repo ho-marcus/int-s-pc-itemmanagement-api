@@ -1,0 +1,12 @@
+%dw 2.0
+
+type auto_8b580289_7485_4c37_87a3_8a19392a1487_Input_Payload = {|
+  wincantonStandardWMSItemStatusResponse: {|
+    responseMessage: {|
+      message: Null, 
+      description: String | Null, 
+      correlationId: String
+    |}
+  |}
+|}
+

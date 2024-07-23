@@ -1,0 +1,9 @@
+#%RAML 1.0 Trait
+    responses:
+      504:
+        description: This status code and error message will be returned in case if the proxy timed out waiting for response from service implementation
+        body:
+          application/json:
+            type: !include ../definitions/commonFaultMessages.raml
+            example: !include ../examples/504.json
+      

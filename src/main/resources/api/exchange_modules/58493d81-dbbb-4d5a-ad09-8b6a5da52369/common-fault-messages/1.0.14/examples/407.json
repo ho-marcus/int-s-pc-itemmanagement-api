@@ -1,0 +1,15 @@
+{
+  "statusCode": 407,
+  "statusType": "Proxy Authentication Required",
+  "statusMessage": "HTTP request from the client was correct, but access to the URL resource requires the prior use of a proxy server that needs some authentication which has not been provided.",
+  "transactionID": "3F2504E0-4F89-11D3-9A0C-0305E82C3301",
+  "correlationID": "84ccd6ea-a5d3-4d2b-b675-fc471f3cb0e6",	
+  "statusDetails": [
+    {
+      "messageID": "X",
+      "messageType": "Error",
+      "messageDetails": "Help URL-"
+    }
+
+  ]
+}

@@ -1,0 +1,7 @@
+tls:
+ alias: "mule-server"
+ keyPassword: "![DT/NLqU2X2ez7Yp7CGxOWg==]"
+ password: "![DT/NLqU2X2ez7Yp7CGxOWg==]"
+ keystoreFilePath: "certificates/server-keystore.jks"
+ truststoreFilePath: "certificates/client-truststore.jks"
+

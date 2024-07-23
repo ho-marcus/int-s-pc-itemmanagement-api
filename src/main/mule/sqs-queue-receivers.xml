@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:sns="http://www.mulesoft.org/schema/mule/sns" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:sqs="http://www.mulesoft.org/schema/mule/sqs" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/sqs http://www.mulesoft.org/schema/mule/sqs/current/mule-sqs.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/sns http://www.mulesoft.org/schema/mule/sns/current/mule-sns.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="async-create-item" doc:id="57b3681f-e058-4928-98fb-fded42a5a67c">
+		<sqs:receivemessages doc:name="receive-create-item-messages" doc:id="ce83c38e-a16c-4e9d-994e-24ab07bdd4f0" config-ref="Amazon_SQS_Configuration-item_create" preserveMessages="true" queueUrl="${awsSQS.createItem.queueURL}" visibilityTimeout="2" visibilityTimeoutUnit="MINUTES"/>
+		<ee:transform doc:name="format-to-json" doc:id="00e71fc0-6609-4132-8f95-b66e1a1950de">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+read(payload,"application/json")]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="eventName"><![CDATA[output application/json
+---
+"Received a new create item request message"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="parse-payload-and-attributes" doc:id="2e775a22-5905-4649-9c7a-239172ae830d">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+---
+if (!isEmpty(payload.Message)) read(payload.Message, "application/xml") else payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="clientCode"><![CDATA[%dw 2.0
+output application/json
+---
+attributes.clientCode default payload.MessageAttributes.clientCode.Value]]></ee:set-variable>
+				<ee:set-variable variableName="retryCount"><![CDATA[%dw 2.0
+output application/java
+---
+attributes.ApproximateReceiveCount default 0 as Number]]></ee:set-variable>
+				<ee:set-variable variableName="receiptHandle"><![CDATA[%dw 2.0
+output application/java
+---
+attributes."sqs.message.receipt.handle"]]></ee:set-variable>
+				<ee:set-variable variableName="mode" ><![CDATA[%dw 2.0
+output application/json
+---
+"async"]]></ee:set-variable>
+				<ee:set-variable variableName="status" ><![CDATA[%dw 2.0
+output application/json
+---
+"CREATE"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<json-logger:logger doc:name="received-create-item-request" doc:id="44e6e6b3-9f53-4062-8b13-b97cdc4b1e0b" config-ref="JSON_Logger_Config" message="Retrieved Create Item async request"/>
+		<flow-ref doc:name="create-item" doc:id="fe5d8f73-b861-454f-852b-8da8857478d9" name="create-item" />
+		<sqs:delete-message doc:name="delete-create-item-queue-message" doc:id="75551e4a-6475-4bf1-af9a-596e158aef8a" config-ref="Amazon_SQS_Configuration-item_create" receiptHandle="#[vars.receiptHandle]" queueUrl="${awsSQS.createItem.queueURL}" />
+		<json-logger:logger doc:name="debug-logger-request-deleted-from-queue" doc:id="517032c2-ff40-4f0e-b7fa-0bf48f58e1d1" config-ref="JSON_Logger_Config" message="Create Item request deleted from queue" priority="DEBUG" category="support"/>
+		<error-handler>
+			<on-error-propagate enableNotifications="false" logException="false" doc:name="On Error Propagate" doc:id="5b0c6625-7f7b-40a4-ad1b-593bec6c9f55" type="HTTP:BAD_GATEWAY, HTTP:CONNECTIVITY, HTTP:INTERNAL_SERVER_ERROR, HTTP:RETRY_EXHAUSTED, HTTP:SERVICE_UNAVAILABLE, HTTP:TIMEOUT, HTTP:TOO_MANY_REQUESTS, SFTP:CONNECTIVITY, SFTP:RETRY_EXHAUSTED, SQS:CONNECTIVITY, BUSINESS:SERVER_ERROR">
+				<choice doc:name="retry-exhausted?" doc:id="0eb9eae8-9944-4c85-8c94-c407d2572047">
+					<when expression="#[(vars.retryCount &gt;= (p('retry.queueRetryCount') as Number))]">
+						<json-logger:logger doc:name="debug-logger-retry-exhausted" doc:id="13c6803a-c895-41bd-898a-d769df951402" config-ref="JSON_Logger_Config" message="Retry exhausted, sending message to DLQ" priority="DEBUG" category="support"/>
+						<ee:transform doc:name="construct-payload" doc:id="f31e22ce-a487-488f-b389-9e2c854fbb18">
+							<ee:message>
+								<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	body: payload.^raw,
+	messageAttributes: {
+		"clientCode": {
+			"stringValue" : vars.clientCode default "",
+			"dataType" : "String"
+		} as Object {
+			class: "org.mule.extension.sqs.api.model.MessageAttributeValue"
+		},
+		"itemCode": {
+			"stringValue" : vars.itemCode default "",
+			"dataType" : "String"
+		} as Object {
+			class: "org.mule.extension.sqs.api.model.MessageAttributeValue"
+		},
+	} as Object {
+		class: "java.util.HashMap"
+	},
+} as Object {
+	class : "org.mule.extension.sqs.api.model.Message"
+}]]></ee:set-payload>
+								<ee:set-attributes ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	statusCode: attributes.statusCode,
+	remoteAddress: attributes.remoteAddress
+}]]></ee:set-attributes>
+							</ee:message>
+							<ee:variables>
+								<ee:set-variable variableName="eventName"><![CDATA[output application/json
+---
+"Sending message to DLQ"]]></ee:set-variable>
+								<ee:set-variable variableName="errorMessage" ><![CDATA[%dw 2.0
+output application/json
+---
+error.description]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+						<sqs:send-message doc:name="send-message-to-item-create-dlq" doc:id="3639245e-0439-4f59-9858-b06cd5a2d66d" config-ref="Amazon_SQS_Configuration-item_create_DLQ" queueUrl="${awsSQS.createItem.dlqQueueURL}" />
+						<json-logger:logger doc:name="debug-logger-dlq-message-sent" doc:id="1b01490f-2d91-4d61-9053-add7c12ef699" config-ref="JSON_Logger_Config" message="DLQ message sent" priority="DEBUG" category="support"/>
+						<set-variable value='#[output application/json&#10;---&#10;"Deleting message from queue"]' doc:name="eventName" doc:id="18747577-33b0-4a24-a360-602ace4804ef" variableName="eventName" />
+						<sqs:delete-message doc:name="delete-create-item-queue-message" doc:id="b7d13807-4be1-4c88-a454-66c2567373b0" config-ref="Amazon_SQS_Configuration-item_create" receiptHandle="#[vars.receiptHandle]" queueUrl="${awsSQS.createItem.queueURL}" />
+						<json-logger:logger doc:name="debug-logger-deleted-original-request" doc:id="5b191343-db5b-43eb-baf4-afdf082d6002" config-ref="JSON_Logger_Config" message="Deleted original Create Item request from queue" priority="DEBUG" category="support"/>
+						<flow-ref doc:name="error-handler-push-to-global-error-topic" doc:id="53094fa3-de0f-428f-b2ea-1367466b8844" name="error-handler-push-to-global-error-topic" target="topicResponse" />
+						<flow-ref doc:name="create-cloudhub-error-notification" doc:id="c6f889ad-b03c-494a-82d5-4f5863b77186" name="create-cloudhub-error-notification" target="alertResponse" />
+					</when>
+					<otherwise>
+						<json-logger:logger doc:name="debug-logger-call-error-handler" doc:id="f47f8e27-1b59-4550-9354-7deb7700081c" config-ref="JSON_Logger_Config" message="Call error handler" priority="DEBUG" category="support" />
+						<flow-ref doc:name="error-main-error-handler" doc:id="ff7478d0-6a02-4581-b8f8-b3f1a6cf9cd4" name="error-main-error-handler" />
+					</otherwise>
+				</choice>
+			</on-error-propagate>
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="8edb39c7-05fa-4d77-b0b5-fff59c3808f8" type="BUSINESS:NOT_FOUND, HTTP:BAD_REQUEST, HTTP:CLIENT_SECURITY, HTTP:FORBIDDEN, HTTP:METHOD_NOT_ALLOWED, HTTP:NOT_ACCEPTABLE, HTTP:NOT_FOUND, HTTP:PARSING, HTTP:SECURITY, HTTP:UNAUTHORIZED, HTTP:UNSUPPORTED_MEDIA_TYPE, SQS:INVALID_CREDENTIALS, SQS:INVALID_DATA, RETRY_EXHAUSTED">
+				<json-logger:logger doc:name="debug-logger-continue" doc:id="330db589-90fd-45a2-a0fd-1ad8c0250efc" config-ref="JSON_Logger_Config" message="Continue with error" priority="DEBUG" category="support"/>
+				<set-variable value='#[output application/json&#10;---&#10;"Deleting message from queue"]' doc:name="eventName" doc:id="47892030-1e44-45da-b228-93e6785fca8b" variableName="eventName" />
+				<sqs:delete-message doc:name="delete-create-item-queue-message" doc:id="0a38d12d-179a-490e-980b-aa9cf1a0babd" config-ref="Amazon_SQS_Configuration-item_create" receiptHandle="#[vars.receiptHandle]" queueUrl="${awsSQS.createItem.queueURL}" />
+				<json-logger:logger doc:name="debug-logger-deleted-original-request" doc:id="08cb078b-d8b8-455f-a774-0d4bbc8102be" config-ref="JSON_Logger_Config" message="Deleted original Create Item request from queue" priority="DEBUG" category="support"/>
+				<flow-ref doc:name="error-handler-push-to-global-error-topic" doc:id="cb353fc5-7658-4b49-898b-bed8a327fd01" name="error-handler-push-to-global-error-topic" target="topicResponse" />
+				<flow-ref doc:name="create-cloudhub-error-notification" doc:id="3f26c5de-57c4-4339-8c4d-4ff26f55c86b" name="create-cloudhub-error-notification" target="alertResponse" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="async-update-item" doc:id="163b1a21-c457-40cc-9eaa-8154029d5e68">
+		<sqs:receivemessages doc:name="receive-update-item-messages" doc:id="65ceecea-4390-480a-9c6f-c4ad2d80f417" config-ref="Amazon_SQS_Configuration-item_update" preserveMessages="true" queueUrl="${awsSQS.updateItem.queueURL}" visibilityTimeout="2" visibilityTimeoutUnit="MINUTES"/>
+		<ee:transform doc:name="format-to-json" doc:id="9f768256-7d7f-41fe-a72f-c55b58ec357e">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+read(payload,"application/json")]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="eventName"><![CDATA[output application/json
+---
+"Received a new update item request message"]]></ee:set-variable>
+			</ee:variables>
+		
+</ee:transform>
+		<ee:transform doc:name="parse-payload-and-attributes" doc:id="f36dab85-b271-4cf8-b55e-89bab710a218">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+---
+if (!isEmpty(payload.Message)) read(payload.Message, "application/xml") else payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="clientCode"><![CDATA[%dw 2.0
+output application/json
+---
+attributes.clientCode default payload.MessageAttributes.clientCode.Value]]></ee:set-variable>
+				<ee:set-variable variableName="retryCount"><![CDATA[%dw 2.0
+output application/java
+---
+attributes.ApproximateReceiveCount default 0 as Number]]></ee:set-variable>
+				<ee:set-variable variableName="receiptHandle"><![CDATA[%dw 2.0
+output application/java
+---
+attributes."sqs.message.receipt.handle"]]></ee:set-variable>
+				<ee:set-variable variableName="mode" ><![CDATA[%dw 2.0
+output application/json
+---
+"async"]]></ee:set-variable>
+				<ee:set-variable variableName="status" ><![CDATA[%dw 2.0
+output application/json
+---
+"UPDATE"]]></ee:set-variable>
+			
+</ee:variables>
+		</ee:transform>
+		<json-logger:logger doc:name="received-update-item-request" doc:id="70f42207-580b-4136-a101-523a3514b4b9" config-ref="JSON_Logger_Config" message="Retrieved Update Item async request"/>
+		<flow-ref doc:name="update-item" doc:id="caf0203b-ae92-4d23-87a1-4a3a1d09624e" name="update-item" />
+		<sqs:delete-message doc:name="delete-update-item-queue-message" doc:id="9171a6d5-57b9-4580-b35e-f1d67a3c9672" config-ref="Amazon_SQS_Configuration-item_update" receiptHandle="#[vars.receiptHandle]" queueUrl="${awsSQS.updateItem.queueURL}" />
+		<json-logger:logger doc:name="debug-logger-request-deleted-from-queue" doc:id="33e6e68b-3101-45fb-be03-03d6c1dcb77e" config-ref="JSON_Logger_Config" message="Update Item request deleted from queue" priority="DEBUG" category="support"/>
+		<error-handler>
+			<on-error-propagate enableNotifications="false" logException="false" doc:name="On Error Propagate" doc:id="7bab712d-6dc4-4acd-b6f7-d631786f4ef6" type="HTTP:BAD_GATEWAY, HTTP:CONNECTIVITY, HTTP:INTERNAL_SERVER_ERROR, HTTP:RETRY_EXHAUSTED, HTTP:SERVICE_UNAVAILABLE, HTTP:TIMEOUT, HTTP:TOO_MANY_REQUESTS, SFTP:CONNECTIVITY, SFTP:RETRY_EXHAUSTED, SQS:CONNECTIVITY">
+				<choice doc:name="retry-exhausted?" doc:id="0faf1e23-0b04-456c-ad42-866d8e2a7b66">
+					<when expression="#[(vars.retryCount &gt;= (p('retry.queueRetryCount') as Number))]">
+						<json-logger:logger doc:name="debug-logger-retry-exhausted" doc:id="89370151-20ac-476d-9af8-8dc49dfc5799" config-ref="JSON_Logger_Config" message="Retry exhausted, sending message to DLQ" priority="DEBUG" category="support"/>
+						<ee:transform doc:name="construct-payload" doc:id="20abe1ec-7c80-4cd8-9db7-6680b554c0ee">
+							<ee:message>
+								<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	body: payload.^raw,
+	messageAttributes: {
+		"clientCode": {
+			"stringValue" : vars.clientCode default "",
+			"dataType" : "String"
+		} as Object {
+			class: "org.mule.extension.sqs.api.model.MessageAttributeValue"
+		},
+		"itemCode": {
+			"stringValue" : vars.itemCode default "",
+			"dataType" : "String"
+		} as Object {
+			class: "org.mule.extension.sqs.api.model.MessageAttributeValue"
+		},
+	} as Object {
+		class: "java.util.HashMap"
+	},
+} as Object {
+	class : "org.mule.extension.sqs.api.model.Message"
+}]]></ee:set-payload>
+								<ee:set-attributes ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	statusCode: attributes.statusCode,
+	remoteAddress: attributes.remoteAddress
+}]]></ee:set-attributes>
+							
+</ee:message>
+							<ee:variables>
+								<ee:set-variable variableName="eventName"><![CDATA[output application/json
+---
+"Sending message to DLQ"]]></ee:set-variable>
+								<ee:set-variable variableName="errorMessage" ><![CDATA[%dw 2.0
+output application/json
+---
+error.description]]></ee:set-variable>
+							</ee:variables>
+						
+</ee:transform>
+						<sqs:send-message doc:name="send-message-to-item-update-dlq" doc:id="93ea6cb4-9b1c-440c-80fb-8c4042bd8536" config-ref="Amazon_SQS_Configuration-item_update_DLQ" queueUrl="${awsSQS.updateItem.dlqQueueURL}" />
+						<json-logger:logger doc:name="debug-logger-dlq-message-sent" doc:id="329d4a6e-ee8d-4660-8a0e-02b65102c974" config-ref="JSON_Logger_Config" message="DLQ message sent" priority="DEBUG" category="support"/>
+						<set-variable value='#[output application/json&#10;---&#10;"Deleting message from queue"]' doc:name="eventName" doc:id="c7531cf0-df47-41a9-8a17-a6bf8e2dfa12" variableName="eventName" />
+						<sqs:delete-message doc:name="delete-update-item-queue-message" doc:id="f698ef32-8702-41fb-8153-13d797779645" config-ref="Amazon_SQS_Configuration-item_update" receiptHandle="#[vars.receiptHandle]" queueUrl="${awsSQS.updateItem.queueURL}" />
+						<json-logger:logger doc:name="debug-logger-deleted-original-request" doc:id="d6dd86a6-8be4-4961-b811-d2014c8221bc" config-ref="JSON_Logger_Config" message="Deleted original Update Item request from queue" priority="DEBUG" category="support"/>
+						<flow-ref doc:name="error-handler-push-to-global-error-topic" doc:id="610138c9-c55f-4830-84b6-abc1c9bbce8f" name="error-handler-push-to-global-error-topic" target="topicResponse" />
+						<flow-ref doc:name="create-cloudhub-error-notification" doc:id="eca37e23-57bc-4c96-a85f-e39b1437749d" name="create-cloudhub-error-notification" target="alertResponse" />
+					
+</when>
+					<otherwise>
+						<json-logger:logger doc:name="debug-logger-call-error-handler" doc:id="d6727459-54f2-4f9f-ba9f-2954e25c85f5" config-ref="JSON_Logger_Config" message="Call error handler" priority="DEBUG" category="support" />
+						<flow-ref doc:name="error-main-error-handler" doc:id="6ce6b680-50c9-4807-ad56-6870179d0d95" name="error-main-error-handler" />
+					
+</otherwise>
+				</choice>
+			</on-error-propagate>
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="917fcb34-7711-471c-8aad-5684f436417d" type="HTTP:BAD_REQUEST, HTTP:CLIENT_SECURITY, HTTP:FORBIDDEN, HTTP:METHOD_NOT_ALLOWED, HTTP:NOT_ACCEPTABLE, HTTP:NOT_FOUND, HTTP:PARSING, HTTP:SECURITY, HTTP:UNAUTHORIZED, HTTP:UNSUPPORTED_MEDIA_TYPE, MULE:RETRY_EXHAUSTED, BUSINESS:NOT_FOUND">
+				<json-logger:logger doc:name="debug-logger-continue" doc:id="99e9ab90-4103-4ed4-84e5-f9cf623c3088" config-ref="JSON_Logger_Config" message="Continue with error" priority="DEBUG" category="support"/>
+				<set-variable value='#[output application/json&#10;---&#10;"Deleting message from queue"]' doc:name="eventName" doc:id="7c66ea91-4c00-4aa5-a744-f2c48d130ce9" variableName="eventName" />
+				<sqs:delete-message doc:name="delete-update-item-queue-message" doc:id="5736e145-fdd0-4937-ae39-2636dd8dbbd8" config-ref="Amazon_SQS_Configuration-item_update" receiptHandle="#[vars.receiptHandle]" queueUrl="${awsSQS.updateItem.queueURL}" />
+				<json-logger:logger doc:name="debug-logger-deleted-original-request" doc:id="2b77f899-ea12-4a3c-a52a-c952d12b7177" config-ref="JSON_Logger_Config" message="Deleted original Update Item request from queue" priority="DEBUG" category="support"/>
+				<flow-ref doc:name="error-handler-push-to-global-error-topic" doc:id="9f571a73-9a17-4704-a314-9d610a0a22e2" name="error-handler-push-to-global-error-topic" target="topicResponse" />
+				<flow-ref doc:name="create-cloudhub-error-notification" doc:id="803fac67-6a92-4cee-a637-ad906d19369c" name="create-cloudhub-error-notification" target="alertResponse" />
+			
+</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="async-delete-item" doc:id="6a1f5d2f-8a40-404c-962c-169e8f55a089" >
+		<sqs:receivemessages doc:name="receive-delete-item-messages" doc:id="03b49ae3-f6f0-45e9-9bcd-3addf14ae04d" config-ref="Amazon_SQS_Configuration-item_delete" preserveMessages="true" queueUrl="${awsSQS.deleteItem.queueURL}" visibilityTimeout="2" visibilityTimeoutUnit="MINUTES"/>
+		<ee:transform doc:name="format-to-json" doc:id="18f25371-2585-4e92-b8cd-85b8db44bde7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+read(payload,"application/json")]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="eventName" ><![CDATA[output application/json
+---
+"Received a new delete item request message"]]></ee:set-variable>
+			</ee:variables>
+		
+</ee:transform>
+		<ee:transform doc:name="parse-payload-and-attributes" doc:id="4bb34f3b-acd8-4b94-8ef0-6f109feee98c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+---
+if (!isEmpty(payload.Message)) read(payload.Message, "application/xml") else payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="clientCode" ><![CDATA[%dw 2.0
+output application/json
+---
+attributes.clientCode default payload.MessageAttributes.clientCode.Value]]></ee:set-variable>
+				<ee:set-variable variableName="retryCount" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.ApproximateReceiveCount default 0 as Number]]></ee:set-variable>
+				<ee:set-variable variableName="receiptHandle" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes."sqs.message.receipt.handle"]]></ee:set-variable>
+				<ee:set-variable variableName="mode" ><![CDATA[%dw 2.0
+output application/json
+---
+"async"]]></ee:set-variable>
+				<ee:set-variable variableName="status" ><![CDATA[%dw 2.0
+output application/json
+---
+"CANCEL"]]></ee:set-variable>
+			
+</ee:variables>
+		</ee:transform>
+		<json-logger:logger doc:name="received-delete-item-request" doc:id="923f79f2-3be9-4648-afb3-6378794e144b" config-ref="JSON_Logger_Config" message="Retrieved Delete Item async request"/>
+		<flow-ref doc:name="delete-item" doc:id="405a4d48-89d3-46d7-b45c-d5505bf17562" name="delete-item" />
+		<sqs:delete-message doc:name="delete-delete-item-queue-message" doc:id="6add40f1-bef3-4a21-b905-69685e15bdc1" config-ref="Amazon_SQS_Configuration-item_delete" receiptHandle="#[vars.receiptHandle]" queueUrl="${awsSQS.deleteItem.queueURL}" />
+		<json-logger:logger doc:name="debug-logger-request-deleted-from-queue" doc:id="97d50598-3fba-4db9-83fc-d3b659518bbb" config-ref="JSON_Logger_Config" message="Delete Item request deleted from queue" priority="DEBUG" category="support"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="false" logException="false" doc:name="On Error Propagate" doc:id="bed477bd-d969-4d76-a6fe-67423132f397" type="HTTP:BAD_GATEWAY, HTTP:CONNECTIVITY, HTTP:INTERNAL_SERVER_ERROR, HTTP:RETRY_EXHAUSTED, HTTP:SERVICE_UNAVAILABLE, HTTP:TIMEOUT, HTTP:TOO_MANY_REQUESTS, SFTP:CONNECTIVITY, SFTP:RETRY_EXHAUSTED, SQS:CONNECTIVITY" >
+				<choice doc:name="retry-exhausted?" doc:id="d0631f01-28bb-4f74-aadf-431ea999280b" >
+					<when expression="#[(vars.retryCount &gt;= (p('retry.queueRetryCount') as Number))]" >
+						<json-logger:logger doc:name="debug-logger-retry-exhausted" doc:id="08852d14-75a0-4c19-93a9-38962f99c982" config-ref="JSON_Logger_Config" message="Retry exhausted, sending message to DLQ" priority="DEBUG" category="support"/>
+						<ee:transform doc:name="construct-payload" doc:id="0ac9b51e-6f5a-4274-9027-306043ae6cf6" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	body: payload.^raw,
+	messageAttributes: {
+		"clientCode": {
+			"stringValue" : vars.clientCode default "",
+			"dataType" : "String"
+		} as Object {
+			class: "org.mule.extension.sqs.api.model.MessageAttributeValue"
+		},
+		"itemCode": {
+			"stringValue" : vars.itemCode default "",
+			"dataType" : "String"
+		} as Object {
+			class: "org.mule.extension.sqs.api.model.MessageAttributeValue"
+		},
+	} as Object {
+		class: "java.util.HashMap"
+	},
+} as Object {
+	class : "org.mule.extension.sqs.api.model.Message"
+}]]></ee:set-payload>
+								<ee:set-attributes ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	statusCode: attributes.statusCode,
+	remoteAddress: attributes.remoteAddress
+}]]></ee:set-attributes>
+							
+</ee:message>
+							<ee:variables >
+								<ee:set-variable variableName="eventName" ><![CDATA[output application/json
+---
+"Sending message to DLQ"]]></ee:set-variable>
+								<ee:set-variable variableName="errorMessage" ><![CDATA[%dw 2.0
+output application/json
+---
+error.description]]></ee:set-variable>
+							</ee:variables>
+						
+</ee:transform>
+						<sqs:send-message doc:name="send-message-to-item-delete-dlq" doc:id="edbed760-e03e-4b6b-bc40-172f6b716ea6" config-ref="Amazon_SQS_Configuration-item_delete_DLQ" queueUrl="${awsSQS.deleteItem.dlqQueueURL}" />
+						<json-logger:logger doc:name="debug-logger-dlq-message-sent" doc:id="0d10d311-314e-4c18-8f06-3108a91d55f8" config-ref="JSON_Logger_Config" message="DLQ message sent" priority="DEBUG" category="support"/>
+						<set-variable value='#[output application/json&#10;---&#10;"Deleting message from queue"]' doc:name="eventName" doc:id="688c7b20-0941-4a86-ba53-8b80f09f145c" variableName="eventName" />
+						<sqs:delete-message doc:name="delete-delete-item-queue-message" doc:id="384035ca-a604-4366-a49a-1b18c450bf82" config-ref="Amazon_SQS_Configuration-item_delete" receiptHandle="#[vars.receiptHandle]" queueUrl="${awsSQS.deleteItem.queueURL}" />
+						<json-logger:logger doc:name="debug-logger-deleted-original-request" doc:id="c4211f46-396a-488a-9a62-afc04d95fcbd" config-ref="JSON_Logger_Config" message="Deleted original Delete Item request from queue" priority="DEBUG" category="support"/>
+						<flow-ref doc:name="error-handler-push-to-global-error-topic" doc:id="c6746707-b37a-4cff-96e5-f76d432fa015" name="error-handler-push-to-global-error-topic" target="topicResponse" />
+						<flow-ref doc:name="create-cloudhub-error-notification" doc:id="cb8c57ed-239f-492e-b107-88e2a25a58c2" name="create-cloudhub-error-notification" target="alertResponse" />
+					
+</when>
+					<otherwise>
+						<json-logger:logger doc:name="debug-logger-call-error-handler" doc:id="1e86c622-7dc6-4f3f-8453-5fcfa8b39ee2" config-ref="JSON_Logger_Config" message="Call error handler" priority="DEBUG" category="support" />
+						<flow-ref doc:name="error-main-error-handler" doc:id="a245976e-f42d-490e-9067-42ffc229d072" name="error-main-error-handler" />
+
+					</otherwise>
+				
+</choice>
+			</on-error-propagate>
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="742170c2-3fdf-4278-9c6e-83f3b1a29ac4" type="HTTP:BAD_REQUEST, HTTP:CLIENT_SECURITY, HTTP:FORBIDDEN, HTTP:METHOD_NOT_ALLOWED, HTTP:NOT_ACCEPTABLE, HTTP:NOT_FOUND, HTTP:PARSING, HTTP:SECURITY, HTTP:UNAUTHORIZED, HTTP:UNSUPPORTED_MEDIA_TYPE, MULE:RETRY_EXHAUSTED, BUSINESS:NOT_FOUND">
+				<json-logger:logger doc:name="debug-logger-continue" doc:id="6ee17df2-28c0-4177-954b-32103f69681a" config-ref="JSON_Logger_Config" message="Continue with error" priority="DEBUG" category="support"/>
+				<set-variable value='#[output application/json&#10;---&#10;"Deleting message from queue"]' doc:name="eventName" doc:id="73c5dce4-3b82-4e17-acbb-db93354e385d" variableName="eventName" />
+				<sqs:delete-message doc:name="delete-delete-item-queue-message" doc:id="a2a2a864-d249-4580-8005-ab0ad462d077" config-ref="Amazon_SQS_Configuration-item_delete" receiptHandle="#[vars.receiptHandle]" queueUrl="${awsSQS.deleteItem.queueURL}" />
+				<json-logger:logger doc:name="debug-logger-deleted-original-request" doc:id="17f486ae-8d31-4313-a2e7-d798c872aa8c" config-ref="JSON_Logger_Config" message="Deleted original Delete Item request from queue" priority="DEBUG" category="support"/>
+				<flow-ref doc:name="error-handler-push-to-global-error-topic" doc:id="1737ffae-4a37-4ef9-8fef-7fb1820b881c" name="error-handler-push-to-global-error-topic" target="topicResponse" />
+				<flow-ref doc:name="create-cloudhub-error-notification" doc:id="f59e0c4f-fa1f-44ed-bd07-ba3ee050a25d" name="create-cloudhub-error-notification" target="alertResponse" />
+			
+</on-error-continue>
+		</error-handler>
+	</flow>
+</mule>

@@ -1,0 +1,8 @@
+#%RAML 1.0 Trait
+    responses:
+      500:
+        description: This status code and error message will be returned in case if the API encounters any internal server error and is unable to process the request
+        body:
+          application/json:
+            type: !include ../definitions/commonFaultMessages.raml
+            example: !include ../examples/500.json

@@ -1,0 +1,738 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<sub-flow name="get-item-status" doc:id="9ac51a5c-00cd-4fce-b44b-1f1cec14ad53" >
+		<json-logger:logger doc:name="start-get-item-status" doc:id="87b41530-6e71-4883-a524-78b9ddcdaca7" config-ref="JSON_Logger_Config" message="Start Get-Item-Status subflow" />
+		<flow-ref doc:name="get-client-information" doc:id="821c2a5b-f789-461e-9488-ff75f4444e0e" name="get-client-information" target="clientInfo" />
+		<json-logger:logger doc:name="client-information-retrieved" doc:id="58704afb-550e-4921-96e9-bc2226e4340f" config-ref="JSON_Logger_Config" message='#["Client Information retrieved for client " ++ vars.clientCode]' >
+			<json-logger:content ><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    clientInfo: JSONLoggerModule::stringifyNonJSON(vars.clientInfo) 
+}]]]></json-logger:content>
+		</json-logger:logger>
+		<flow-ref doc:name="get-wmsdb-details" doc:id="a3e94793-7e1f-4310-8a07-0be61bf1c75f" name="get-wmsdb-details"/>
+		<json-logger:logger doc:name="wmsdb-details-retrieved" doc:id="2476d982-0c2c-4db6-8968-4ca23090d1d3" config-ref="JSON_Logger_Config" message='#["WMS MH details retrieved for client " ++ vars.clientCode]'>
+			<json-logger:content><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    WMSDBDetails: JSONLoggerModule::stringifyNonJSON(vars.wmsdb) 
+}]]]></json-logger:content>
+		</json-logger:logger>
+		<set-variable value='#[output application/json&#10;---&#10;"Get item record for " ++ vars.itemCode ++ " from Manhattan database"]' doc:name="eventName" doc:id="4f993f0c-9297-4813-a01d-e735707288d6" variableName="eventName" />
+		<until-successful maxRetries="${retry.numOfRetries}" doc:name="Until Successful" doc:id="b3f9b3a4-2a89-42c2-a29b-ec97146f5f52" millisBetweenRetries="${retry.milliseconds}">
+			<db:select doc:name="select-from-ITEM_CBO" doc:id="1ad00a1a-a5cc-47c0-82ca-3b27ededf4b4" config-ref="${wms.configRef}">
+			<db:sql><![CDATA[select DESCRIPTION, COMMERCE_ATTRIBUTE1, to_char(LAST_UPDATED_DTTM,'dd/mm/yyyy hh24:mi:ss') as LAST_UPDATED_DTTM, MARK_FOR_DELETION from ITEM_CBO where COMPANY_ID = :businessUnit and ITEM_NAME = :itemCode]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	"itemCode": vars.itemCode,
+	"businessUnit": vars.clientInfo.businessUnit
+}]]]></db:input-parameters>
+		</db:select>
+		</until-successful>
+		<ee:transform doc:name="convert-to-json" doc:id="f7d5abc0-ff61-4a89-a355-aeaafcbd632a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload[0]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="record-retrieved-from-manhattan" doc:id="eb633614-0c1e-4a60-9a04-7707310c640b" config-ref="JSON_Logger_Config" message='#["Record search response from Manhattan for item " ++ vars.itemCode]'/>
+		<choice doc:name="record-found?" doc:id="714add0f-0002-408c-8988-8577bb849f33" >
+			<when expression="#[!isEmpty(payload)]">
+				<json-logger:logger doc:name="debug-logger-record-found-in-manhattan" doc:id="7872d957-5f76-4756-a53c-63e51caeb98c" config-ref="JSON_Logger_Config" message="Item record found in Manhattan" priority="DEBUG" category="support"/>
+				<set-variable value='#[output application/json&#10;---&#10;"Get item status record for " ++ vars.itemCode ++ " from Integration Services database"]' doc:name="eventName" doc:id="58bc4d1a-ae7a-4f4a-9af7-1b57aa7936e9" variableName="eventName" />
+				<until-successful maxRetries="${retry.numOfRetries}" doc:name="Until Successful" doc:id="76fba135-c835-4632-ae42-7a4786bcfebc" millisBetweenRetries="${retry.milliseconds}">
+					<http:request method="GET" doc:name="http-integration-services-system-get-record-status" doc:id="883437fd-1574-43d7-8afe-756734a8a6af" config-ref="SYS_Integration_Services_HTTP_Request_configuration" path="${system.integrationServices.getRecordStatusPath}" target="recordStatus">
+						<error-mapping sourceType="HTTP:NOT_FOUND" targetType="BUSINESS:NOT_FOUND" />
+						<http:headers><![CDATA[#[output application/json
+---
+{	"CONTEXT-ID" : vars.contextID,
+	"X-CORRELATION-ID": correlationId,
+	client_id: p('secure::system.integrationServices.clientID'),
+	client_secret: p('secure::system.integrationServices.clientSecret')
+}]]]></http:headers>
+						<http:uri-params><![CDATA[#[output application/java
+---
+{
+	clientCode : vars.clientCode
+}]]]></http:uri-params>
+						<http:query-params><![CDATA[#[output application/java
+---
+{
+	sourceSystem: p('wmsSourceSystem'),
+	recordType: "ITEM",
+	statusCode: payload.MARK_FOR_DELETION
+	
+}]]]></http:query-params>
+					</http:request>
+				</until-successful>
+				<json-logger:logger doc:name="record-status-retrieved-from-isdb" doc:id="35b6a585-4bb4-4fad-afca-1ea383404a42" config-ref="JSON_Logger_Config" message="Status record found in Integration Services " >
+					<json-logger:content ><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    recordStatus: JSONLoggerModule::stringifyNonJSON(vars.recordStatus) 
+}]]]></json-logger:content>
+				</json-logger:logger>
+				<choice doc:name="record-found?" doc:id="82f3ab95-13aa-4ec9-97a4-fae818e73312">
+					<when expression="#[vars.recordStatus != null]">
+						<json-logger:logger doc:name="debug-logger-record-found-in-isdb" doc:id="8e72fee7-f7ea-49cb-ade0-859d3bffe9c0" config-ref="JSON_Logger_Config" message="Item Status record found in Integration Services database" priority="DEBUG" category="support"/>
+						<ee:transform doc:name="map-response" doc:id="0bfbb3cb-a9b4-4728-82aa-0fa3f9472d90">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+---
+{
+	wincantonStandardWMSItemStatusResponse: {
+		wincantonStandardWMSItemStatus: {
+			itemCode: vars.itemCode,
+			descriptions: {
+				longDescription: payload.DESCRIPTION,
+				itemDescription: payload.DESCRIPTION,
+			},
+			itemStatus: vars.recordStatus,
+			lastUpdateID: payload.COMMERCE_ATTRIBUTE1,
+			lastUpdateDateTime: payload.LAST_UPDATED_DTTM
+		}
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+					</when>
+					<otherwise >
+						<json-logger:logger doc:name="debug-logger-no-record-found" doc:id="eaa62823-be49-4a18-b1ad-d96453ada12c" config-ref="JSON_Logger_Config" message="No Record Found in Integration Services database" priority="DEBUG" category="support"/>
+						<raise-error doc:name="DB:NOT_FOUND" doc:id="996f090a-9519-425b-a807-6a4191444a88" type="DB:NOT_FOUND" description="No records found in WMSSTATUSDESC" />
+					</otherwise>
+				</choice>
+				<json-logger:logger doc:name="end-get-item-status" doc:id="bddc3c93-6531-48f7-bf56-cfcdc17f4a34" config-ref="JSON_Logger_Config" message="End Get-Item-Status subflow" />
+			</when>
+			<otherwise >
+				<json-logger:logger doc:name="debug-logger-no-record-found" doc:id="767fbf59-b923-4cf0-8db8-398d0265d0d9" config-ref="JSON_Logger_Config" message="No Record Found in ITEM_CBO" priority="DEBUG" category="support"/>
+				<raise-error doc:name="DB:NOT_FOUND" doc:id="4bcded6c-7745-4941-9864-0fc32651b90c" type="DB:NOT_FOUND" description="No records found in ITEM_CBO" />
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="create-item" doc:id="66807081-12b9-49f8-9862-e7c317b055cb" >
+		<json-logger:logger doc:name="start-create-item" doc:id="dacc1427-31b8-480e-a4b0-1dcf5247dabb" config-ref="JSON_Logger_Config" message="Start Create-Item subflow" />
+		<flow-ref doc:name="get-client-information" doc:id="d9a373e3-01ce-4677-ae96-be5ca62c048d" name="get-client-information" target="clientInfo" />
+		<json-logger:logger doc:name="client-information-retrieved" doc:id="3b4bc463-3cad-46b7-b35e-83de2237846e" config-ref="JSON_Logger_Config" message='#["Client Information retrieved for client " ++ vars.clientCode]' >
+			<json-logger:content ><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    clientInfo: JSONLoggerModule::stringifyNonJSON(vars.clientInfo) 
+}]]]></json-logger:content>
+		</json-logger:logger>
+		<flow-ref doc:name="get-sftp-details" doc:id="17c74641-01e6-470b-9e9b-a8ec8bfc0dec" name="get-sftp-details" target="sftpDetails" />
+		<json-logger:logger doc:name="sftp-details-retrieved" doc:id="9270aba4-c522-45c2-9c15-72d45d12a464" config-ref="JSON_Logger_Config" message='#["SFTP details retrieved for client " ++ vars.clientCode]' >
+			<json-logger:content ><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    sftpDetails: JSONLoggerModule::stringifyNonJSON(vars.sftpDetails) 
+}]]]></json-logger:content>
+		</json-logger:logger>
+		<set-variable value='#[output application/json&#10;---&#10;"Mapping create item request"]' doc:name="eventName" doc:id="e800b1a9-b2e5-46a1-8b19-44e680034060" variableName="eventName" />
+		<ee:transform doc:name="map-item-request" doc:id="e280b655-2b7c-4066-9c4b-d64dcfa1c57d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml skipNullOn="everywhere"
+
+import * from dw::core::Strings
+
+fun itemWmosMapping(value) = if(value == "Not Required") "N"
+								else if(value == "Accept If Not Present") "0"
+								else if(value == "Allow User Override") "1"
+								else null
+
+---
+{
+	tXML: {
+		Header: {
+			Source: "Host",
+			Action_Type: "Create",
+			Message_Type: "Item" ,
+			Company_ID: vars.clientInfo.businessUnit withMaxSize 40,
+			Msg_Locale: "English (United Kingdom)"
+		},
+		Message: {
+
+			Item: {
+				ItemName: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.itemCode withMaxSize 100,
+				BusinessUnit: vars.clientInfo.businessUnit withMaxSize 9,
+				Description: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.descriptions.itemDescription withMaxSize 65,
+				LongDescription: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.descriptions.longDescription withMaxSize 500,
+				BaseStorageUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.baseStorageUnitofMeasure == "Unit") "Units" else null,
+				ItemColor: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.color withMaxSize 4,
+				ItemSizeDesc: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.sizeDescription withMaxSize 15,
+				UnitWeight: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.weight as Number {format: "#.#"} default null,
+				WeightUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.uom == "LBS") "Lbs" 
+							else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.uom  == "KGS") "kgs" else null,
+				UnitVolume: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.volume as Number {format: "#.#"} default null,
+				VolumeUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Millilitres") "ml" 
+		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Centimetres") "cm3" 
+		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Feet") "cu ft" 
+		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Metres") "cu m" 
+		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Inches") "cu in" else null ,
+		   		UnitHeight: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.height as Number {format: "#.#"} default null,
+				UnitWidth: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.width as Number {format: "#.#"} default null,
+				UnitLength: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.length as Number {format: "#.#"} default null,
+				DimensionUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.uom == "Centimetre") "cm" else null,
+				QtyUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.orderingUnitofMeasure == "Unit") "Units" else null,
+				ItemBarCode: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.barcode withMaxSize 50,
+				ProductType: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.productType withMaxSize 3,
+				StdBundlQty: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.standardBundleQuantity as String {format: "#.00"} default null,
+				ItemProfileName: vars.clientInfo.businessUnit withMaxSize 30,
+				ReferenceField1: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[0] withMaxSize 25 default null,
+				ReferenceField2: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[1] withMaxSize 25 default null,
+				ReferenceField3: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[2] withMaxSize 25 default null,
+				ReferenceField4: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[3] withMaxSize 25 default null,
+				ReferenceField5: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[4] withMaxSize 25 default null,
+				ReferenceField6: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[5] withMaxSize 25 default null,
+				ReferenceField7: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[6] withMaxSize 25 default null,
+				ReferenceField8: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[7] withMaxSize 25 default null,
+				ReferenceField9: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[8] withMaxSize 25 default null,
+				ReferenceField10: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[9] withMaxSize 25 default null,
+				ReferenceNumberField1: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0]))) payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField2: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1]))) payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField3: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2]))) payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField4: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3]))) payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField5: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4]))) payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4] as String {format: "#.00000"} else null) default null,
+				CommerceAttribute1: payload.wincantonStandardWMSItemRequest.internalActionFields.actionID withMaxSize 50,
+				MarkForDeletion: "0",
+				ItemSupplierXrefList: {
+					ItemSupplierXref: {
+						SupplierItemBarcode: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.supplierCrossReferenceInformation.supplierBarcode withMaxSize 20,
+						ScanQnty: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.supplierCrossReferenceInformation.supplierQuantity as String {format: "#.00"} default null,
+						ItemBarCode: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.supplierCrossReferenceInformation.itemBarcode withMaxSize 50,
+						MarkForDeletion: "0"
+					}
+				},
+				ItemFacilityWMSList: {
+					ItemFacilityWMS: {
+						FacilityName: vars.clientInfo.facilityID,
+						ItemFacilityProfileName: vars.clientInfo.businessUnit withMaxSize 30,
+						ShelfDays: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.shelfLife.shelfLifeDays as Number withMaxSize 5 default null,
+						MarkForDeletion: "0"
+					}
+				},
+				ItemPackageList: {
+				    ItemPackage: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.*handlingUnits.*handlingUnitCase map ((hCase, index) -> {
+                        PkgUOM: "Cases",
+                        Weight: hCase.handlingUnitDimensions.weightDimensions.weight as Number {format: "#.#"} default null, 
+                        Quantity: hCase.handlingUnitDetails.unitQuantity as String {format: "#.0000"},
+                        WeightUOM: if(hCase.handlingUnitDimensions.weightDimensions.uom == "LBS")("Lbs") else if(hCase.handlingUnitDimensions.weightDimensions.uom == "KGS")("kgs") else null,
+                        Gtin: hCase.handlingUnitDetails.GTIN withMaxSize 25,
+                        UnitLength: hCase.handlingUnitDimensions.sizeDimensions.length as Number {format: "#.#"} default null,
+                       	UnitHeight: hCase.handlingUnitDimensions.sizeDimensions.height as Number {format: "#.#"} default null,
+                        UnitWidth: hCase.handlingUnitDimensions.sizeDimensions.width as Number {format: "#.#"} default null,
+                        DimensionUOM: if(hCase.handlingUnitDimensions.sizeDimensions.uom == "Centimetre") "cm" else null,
+                        UnitVolume: (hCase.handlingUnitDimensions.volumeDimensions.volume) as Number {format: "#.#"} default null,
+                        VolumeUOM: if(hCase.handlingUnitDimensions.volumeDimensions.uom == "Millilitres") "ml" 
+		   							else if(hCase.handlingUnitDimensions.volumeDimensions.uom == "Cubic Centimetres") "cm3" 
+		   							else if(hCase.handlingUnitDimensions.volumeDimensions.uom == "Cubic Feet") "cu ft" 
+		                			else if(hCase.handlingUnitDimensions.volumeDimensions.uom == "Cubic Metres") "cu m" 
+		                			else if(hCase.handlingUnitDimensions.volumeDimensions.uom == "Cubic Inches") "cu in" else null,
+                        IsStandard: "1",
+                        MarkForDeletion: "0",
+                    }),
+                    ItemPackage: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.*handlingUnits.*handlingUnitPallet map ((hPallet, index) -> {
+                      	PkgUOM: "Pallets",
+                      	Weight: hPallet.handlingUnitDimensions.weightDimensions.weight as Number {format: "#.#"} default null, 
+                      	Quantity: hPallet.handlingUnitDetails.unitQuantity as String {format: "#.0000"},
+                      	WeightUOM: if(hPallet.handlingUnitDimensions.weightDimensions.uom == "LBS")("Lbs") else if(hPallet.handlingUnitDimensions.weightDimensions.uom == "KGS")("kgs") else null,
+                      	Gtin: hPallet.handlingUnitDetails.GTIN withMaxSize 25,
+                      	UnitLength: hPallet.handlingUnitDimensions.sizeDimensions.length as Number {format: "#.#"} default null,
+                      	UnitHeight: hPallet.handlingUnitDimensions.sizeDimensions.height as Number {format: "#.#"} default null,
+                      	UnitWidth: hPallet.handlingUnitDimensions.sizeDimensions.width as Number {format: "#.#"} default null,
+                      	DimensionUOM: if(hPallet.handlingUnitDimensions.sizeDimensions.uom == "Centimetre") "cm" else null,
+                      	UnitVolume: (hPallet.handlingUnitDimensions.volumeDimensions.volume) as Number {format: "#.#"} default null,
+                      	VolumeUOM: if(hPallet.handlingUnitDimensions.volumeDimensions.uom == "Millilitres") "ml" 
+		   							else if(hPallet.handlingUnitDimensions.volumeDimensions.uom == "Cubic Centimetres") "cm3" 
+		   							else if(hPallet.handlingUnitDimensions.volumeDimensions.uom == "Cubic Feet") "cu ft" 
+		                			else if(hPallet.handlingUnitDimensions.volumeDimensions.uom == "Cubic Metres") "cu m" 
+		                			else if(hPallet.handlingUnitDimensions.volumeDimensions.uom == "Cubic Inches") "cu in" else null,
+		               	IsStandard: "1",
+                        MarkForDeletion: "0",
+                    }),
+                },
+				ItemWmos: {
+					ProdSubGrp: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.subGroup withMaxSize 3,
+					SaleGrp: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.salesGroup withMaxSize 6,
+					XpireDateReqd: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.expiryDateRequired == "Prompt if Null") "0" 
+									else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.expiryDateRequired == "Always Prompt") "1"
+									else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.expiryDateRequired == "Never Prompt") "N"
+									else null,
+					ItemAttrReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.itemAttributesRequired),
+					LotReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.lotRequired),
+					ProdStatReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.productStatusRequired),
+					CntryOfOrgnReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.countryOfOriginRequired),
+					EccnNbr: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.ECCNNumber withMaxSize 6,
+					SrlNbrReq: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Not Required") "0"
+								else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Track During Outbound Only") "1"
+								else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Track During Inbound Only") "3"
+								else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Full Tracking Required") "4"
+								else null
+				}
+			}
+        }
+	}
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="debug-logger-mapped-create-item-request" doc:id="fe1c344e-2556-47da-a411-14f393b7b6b9" config-ref="JSON_Logger_Config" message="Mapped Create Item request" priority="DEBUG" category="support"/>
+		<os:retrieve doc:name="filename-sequence" doc:id="0e287a78-fc91-4ae9-ab6a-24ab543965de" key="filenameSequence" objectStore="FilenameSequence-Object_store" target="filenameSequence" >
+			<os:default-value ><![CDATA[#[p('filenameSequenceStart')]]]></os:default-value>
+		</os:retrieve>
+		<ee:transform doc:name="set-filename" doc:id="96fe3175-84c8-48e1-98f4-619e7bf016e6" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="filename" ><![CDATA[%dw 2.0
+output application/json
+---
+"/ITEM_" ++ vars.clientInfo.businessUnit ++ "_" ++ (now() as String {format: "yyyyMMddHHmmss"})
+++ "." ++ vars.filenameSequence ++ ".xml"
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+<json-logger:logger doc:name="debug-logger-filename" doc:id="fcaf1d22-08e3-4dfc-92f9-0aee3ad27f8d" config-ref="JSON_Logger_Config" message="Filename " priority="DEBUG" category="support">
+			<json-logger:content ><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    filename: JSONLoggerModule::stringifyNonJSON(vars.filename) 
+}]]]></json-logger:content>
+		</json-logger:logger>
+		<set-variable value='#[output application/json&#10;---&#10;"Dropping file " ++ vars.filename ++ " into SFTP"]' doc:name="eventName" doc:id="2440dc2f-bf70-4707-93a3-bb2b60b8f03e" variableName="eventName" />
+		<until-successful maxRetries="${retry.numOfRetries}" doc:name="Until Successful" doc:id="d998df83-ba4b-4174-ad73-82b70be6e0f7" millisBetweenRetries="${retry.milliseconds}">
+					<sftp:write doc:name="write-to-manhattan-sftp" doc:id="87659f50-fc81-4926-8c97-fdc2d96ae554" config-ref="MH_SFTP-config" path="#[vars.sftpDetails.sftpDestinationFolder ++ vars.filename]">
+		</sftp:write>
+		</until-successful>
+		<ee:transform doc:name="set-next filename-sequence" doc:id="b9388ea3-1d14-45c0-bb23-71319b38b062" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="filenameSequence" ><![CDATA[%dw 2.0
+output application/json
+---
+
+if(vars.filenameSequence as Number != 999)((vars.filenameSequence as Number + 1) as String {format: "000"})
+else(p('filenameSequenceStart'))]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<os:store doc:name="filename-sequence" doc:id="fa05625d-23a3-4a49-954b-32626f31856d" key="filenameSequence" objectStore="FilenameSequence-Object_store" >
+			<os:value ><![CDATA[#[vars.filenameSequence]]]></os:value>
+		</os:store>
+		<json-logger:logger doc:name="end-create-item" doc:id="200e2858-6e6c-4a37-a83c-9bfb32d85539" config-ref="JSON_Logger_Config" message="End Create-Item subflow" />
+	</sub-flow>
+	<sub-flow name="update-item" doc:id="28989197-7b77-43c7-97c0-b5ea4cde53e2" >
+		<json-logger:logger doc:name="start-update-item" doc:id="5630f795-b62b-4cfa-9ef1-5ffd8ae907d0" config-ref="JSON_Logger_Config" message="Start Update-Item subflow" />
+		<flow-ref doc:name="get-client-information" doc:id="42616849-d186-4c21-9ac7-b7b831217bff" name="get-client-information" target="clientInfo" />
+		<json-logger:logger doc:name="client-information-retrieved" doc:id="5f94d2cf-027d-4510-a068-8f945ec80777" config-ref="JSON_Logger_Config" message='#["Client Information retrieved for client " ++ vars.clientCode]' >
+			<json-logger:content ><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    clientInfo: JSONLoggerModule::stringifyNonJSON(vars.clientInfo) 
+}]]]></json-logger:content>
+		</json-logger:logger>
+		<flow-ref doc:name="get-sftp-details" doc:id="e4c850f0-7c58-4e38-a205-ca12c1383737" name="get-sftp-details" target="sftpDetails" />
+		<json-logger:logger doc:name="sftp-details-retrieved" doc:id="264cbab0-f0cd-4911-aafe-ee0a4b5a7621" config-ref="JSON_Logger_Config" message='#["SFTP details retrieved for client " ++ vars.clientCode]' >
+			<json-logger:content ><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    sftpDetails: JSONLoggerModule::stringifyNonJSON(vars.sftpDetails) 
+}]]]></json-logger:content>
+		</json-logger:logger>
+		<set-variable value='#[output application/json&#10;---&#10;"Mapping update item request"]' doc:name="eventName" doc:id="47d8602e-d99e-42ef-bdb3-61f41827bcf9" variableName="eventName" />
+		<ee:transform doc:name="map-item-request" doc:id="3b8f032d-433f-4b64-ba31-acb27e47e6d8" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml skipNullOn="everywhere"
+
+import * from dw::core::Strings
+
+fun itemWmosMapping(value) = if(value == "Not Required") "N"
+								else if(value == "Accept If Not Present") "0"
+								else if(value == "Allow User Override") "1"
+								else null
+---
+{
+	tXML: {
+		Header: {
+			Source: "Host",
+			Action_Type: "Update",
+			Message_Type: "Item" ,
+			Company_ID: vars.clientInfo.businessUnit withMaxSize 40,
+			Msg_Locale: "English (United Kingdom)"
+		},
+		Message: {
+			Item: {
+				ItemName: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.itemCode withMaxSize 100,
+				BusinessUnit: vars.clientInfo.businessUnit withMaxSize 9,
+				Description: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.descriptions.itemDescription withMaxSize 65,
+				LongDescription: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.descriptions.longDescription withMaxSize 500,
+				BaseStorageUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.baseStorageUnitofMeasure == "Unit") "Units" else null,
+				ItemColor: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.color withMaxSize 4,
+				ItemSizeDesc: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.sizeDescription withMaxSize 15,
+				UnitWeight: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.weight as Number {format: "#.#"} default null,
+				WeightUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.uom == "LBS") "Lbs" 
+							else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.uom  == "KGS") "kgs" else null,
+				UnitVolume: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.volume as Number {format: "#.#"} default null,
+				VolumeUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Millilitres") "ml" 
+		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Centimetres") "cm3" 
+		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Feet") "cu ft" 
+		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Metres") "cu m" 
+		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Inches") "cu in" else null ,
+		   		UnitHeight: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.height as Number {format: "#.#"} default null,
+				UnitWidth: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.width as Number {format: "#.#"} default null,
+				UnitLength: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.length as Number {format: "#.#"} default null,
+				DimensionUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.uom == "Centimetre") "cm" else null,
+				QtyUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.orderingUnitofMeasure == "Unit") "Units" else null,
+				ItemBarCode: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.barcode withMaxSize 50,
+				ProductType: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.productType withMaxSize 3,
+				StdBundlQty: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.standardBundleQuantity as String {format: "#.00"} default null,
+				ItemProfileName: vars.clientInfo.businessUnit withMaxSize 30,
+				ReferenceField1: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[0] withMaxSize 25 default null,
+				ReferenceField2: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[1] withMaxSize 25 default null,
+				ReferenceField3: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[2] withMaxSize 25 default null,
+				ReferenceField4: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[3] withMaxSize 25 default null,
+				ReferenceField5: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[4] withMaxSize 25 default null,
+				ReferenceField6: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[5] withMaxSize 25 default null,
+				ReferenceField7: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[6] withMaxSize 25 default null,
+				ReferenceField8: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[7] withMaxSize 25 default null,
+				ReferenceField9: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[8] withMaxSize 25 default null,
+				ReferenceField10: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[9] withMaxSize 25 default null,
+				ReferenceNumberField1: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0])))payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField2: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1])))payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField3: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2])))payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField4: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3])))payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField5: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4])))payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4] as String {format: "#.00000"} else null) default null,
+				CommerceAttribute1: payload.wincantonStandardWMSItemRequest.internalActionFields.actionID withMaxSize 50,
+				MarkForDeletion: "0",
+				ItemSupplierXrefList: {
+					ItemSupplierXref: {
+						SupplierItemBarcode: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.supplierCrossReferenceInformation.supplierBarcode withMaxSize 20,
+						ScanQnty: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.supplierCrossReferenceInformation.supplierQuantity as String {format: "#.00"} default null,
+						ItemBarCode: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.supplierCrossReferenceInformation.itemBarcode withMaxSize 50,
+						MarkForDeletion: "0"
+					}
+				},
+				ItemFacilityWMSList: {
+					ItemFacilityWMS: {
+						FacilityName: vars.clientInfo.facilityID,
+						ItemFacilityProfileName: vars.clientInfo.businessUnit withMaxSize 30,
+						ShelfDays: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.shelfLife.shelfLifeDays as Number withMaxSize 5 default null,
+						MarkForDeletion: "0"
+					}
+				},
+				ItemPackageList: {
+				    ItemPackage: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.*handlingUnits.*handlingUnitCase map ((hCase, index) -> {
+                        PkgUOM: "Cases",
+                        Weight: hCase.handlingUnitDimensions.weightDimensions.weight as Number {format: "#.#"} default null, 
+                        Quantity: hCase.handlingUnitDetails.unitQuantity as String {format: "#.0000"},
+                        WeightUOM: if(hCase.handlingUnitDimensions.weightDimensions.uom == "LBS")("Lbs") else if(hCase.handlingUnitDimensions.weightDimensions.uom == "KGS")("kgs") else null,
+                        Gtin: hCase.handlingUnitDetails.GTIN withMaxSize 25,
+                        UnitLength: hCase.handlingUnitDimensions.sizeDimensions.length as Number {format: "#.#"} default null,
+                        UnitHeight: hCase.handlingUnitDimensions.sizeDimensions.height as Number {format: "#.#"} default null,
+                        UnitWidth: hCase.handlingUnitDimensions.sizeDimensions.width as Number {format: "#.#"} default null,
+                        DimensionUOM: if(hCase.handlingUnitDimensions.sizeDimensions.uom == "Centimetre") "cm" else null,
+                        UnitVolume: (hCase.handlingUnitDimensions.volumeDimensions.volume) as Number {format: "#.#"} default null,
+                        VolumeUOM: if(hCase.handlingUnitDimensions.volumeDimensions.uom == "Millilitres") "ml" 
+		   							else if(hCase.handlingUnitDimensions.volumeDimensions.uom == "Cubic Centimetres") "cm3" 
+		   							else if(hCase.handlingUnitDimensions.volumeDimensions.uom == "Cubic Feet") "cu ft" 
+		                			else if(hCase.handlingUnitDimensions.volumeDimensions.uom == "Cubic Metres") "cu m" 
+		                			else if(hCase.handlingUnitDimensions.volumeDimensions.uom == "Cubic Inches") "cu in" else null,
+                        IsStandard: "1",
+                        MarkForDeletion: "0",
+                    }),
+                    ItemPackage: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.*handlingUnits.*handlingUnitPallet map ((hPallet, index) -> {
+                      	PkgUOM: "Pallets",
+                      	Weight: hPallet.handlingUnitDimensions.weightDimensions.weight as Number {format: "#.#"} default null, 
+                      	Quantity: hPallet.handlingUnitDetails.unitQuantity as String {format: "#.0000"},
+                      	WeightUOM: if(hPallet.handlingUnitDimensions.weightDimensions.uom == "LBS")("Lbs") else if(hPallet.handlingUnitDimensions.weightDimensions.uom == "KGS")("kgs") else null,
+                      	Gtin: hPallet.handlingUnitDetails.GTIN withMaxSize 25,
+                      	UnitLength: hPallet.handlingUnitDimensions.sizeDimensions.length as Number {format: "#.#"} default null,
+                      	UnitHeight: hPallet.handlingUnitDimensions.sizeDimensions.height as Number {format: "#.#"} default null,
+                      	UnitWidth: hPallet.handlingUnitDimensions.sizeDimensions.width as Number {format: "#.#"} default null,
+                      	DimensionUOM: if(hPallet.handlingUnitDimensions.sizeDimensions.uom == "Centimetre") "cm" else null,
+                      	UnitVolume: (hPallet.handlingUnitDimensions.volumeDimensions.volume) as Number {format: "#.#"} default null,
+                      	VolumeUOM: if(hPallet.handlingUnitDimensions.volumeDimensions.uom == "Millilitres") "ml" 
+		   							else if(hPallet.handlingUnitDimensions.volumeDimensions.uom == "Cubic Centimetres") "cm3" 
+		   							else if(hPallet.handlingUnitDimensions.volumeDimensions.uom == "Cubic Feet") "cu ft" 
+		                			else if(hPallet.handlingUnitDimensions.volumeDimensions.uom == "Cubic Metres") "cu m" 
+		                			else if(hPallet.handlingUnitDimensions.volumeDimensions.uom == "Cubic Inches") "cu in" else null,
+		                IsStandard: "1",
+                        MarkForDeletion: "0",
+                    }),
+                },
+				ItemWmos: {
+					ProdSubGrp: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.subGroup withMaxSize 3,
+					SaleGrp: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.salesGroup withMaxSize 6,
+					XpireDateReqd: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.expiryDateRequired == "Prompt if Null") "0" 
+									else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.expiryDateRequired == "Always Prompt") "1"
+									else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.expiryDateRequired == "Never Prompt") "N"
+									else null,
+					ItemAttrReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.itemAttributesRequired),
+					LotReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.lotRequired),
+					ProdStatReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.productStatusRequired),
+					CntryOfOrgnReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.countryOfOriginRequired),
+					EccnNbr: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.ECCNNumber withMaxSize 6,
+					SrlNbrReq: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Not Required") "0"
+								else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Track During Outbound Only") "1"
+								else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Track During Inbound Only") "3"
+								else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Full Tracking Required") "4"
+								else null
+				}
+			}
+        }
+	}
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="debug-logger-mapped-update-item-request" doc:id="cca53fe9-2aed-4e8c-96af-1dc9540fbf0a" config-ref="JSON_Logger_Config" message="Mapped Update Item request" priority="DEBUG" category="support"/>
+		<os:retrieve doc:name="filename-sequence" doc:id="dde12732-e80a-473c-9f7f-9cbbfd1cb9c7" key="filenameSequence" objectStore="FilenameSequence-Object_store" target="filenameSequence">
+			<os:default-value><![CDATA[#[p('filenameSequenceStart')]]]></os:default-value>
+		</os:retrieve>
+		<ee:transform doc:name="set-filename" doc:id="fce10020-7ca2-4752-a342-1009f1219d63" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="filename" ><![CDATA[%dw 2.0
+output application/json
+---
+"/ITEM_" ++ vars.clientInfo.businessUnit ++ "_" ++ (now() as String {format: "yyyyMMddHHmmss"})
+++ "." ++ vars.filenameSequence ++ ".xml"
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+<json-logger:logger doc:name="debug-logger-filename" doc:id="c1db6265-e1e1-48ac-b95e-4c3062071116" config-ref="JSON_Logger_Config" message="Filename " priority="DEBUG" category="support">
+			<json-logger:content><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    filename: JSONLoggerModule::stringifyNonJSON(vars.filename) 
+}]]]></json-logger:content>
+		</json-logger:logger>
+		<set-variable value='#[output application/json&#10;---&#10;"Dropping file " ++ vars.filename ++ " into SFTP"]' doc:name="eventName" doc:id="7dc7ba73-af3d-4f06-8d0a-18be07e22392" variableName="eventName" />
+		<until-successful maxRetries="${retry.numOfRetries}" doc:name="Until Successful" doc:id="337d4dc3-3c31-4337-aa91-cd5a7734868f" millisBetweenRetries="${retry.milliseconds}">
+			<sftp:write doc:name="write-to-manhattan-sftp" doc:id="32a3efeb-678f-43c0-a6c3-b6dbeab2cc4c" config-ref="MH_SFTP-config" path="#[vars.sftpDetails.sftpDestinationFolder ++ vars.filename]">
+		</sftp:write>
+		</until-successful>
+		<ee:transform doc:name="set-next filename-sequence" doc:id="299a4783-26be-467f-a445-9a582b0b55df" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="filenameSequence" ><![CDATA[%dw 2.0
+output application/json
+---
+
+if(vars.filenameSequence as Number != 999)((vars.filenameSequence as Number + 1) as String {format: "000"})
+else(p('filenameSequenceStart'))]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<os:store doc:name="filename-sequence" doc:id="593dfeb2-4b70-462e-b5b9-6a95b83ba171" key="filenameSequence" objectStore="FilenameSequence-Object_store" >
+			<os:value ><![CDATA[#[vars.filenameSequence]]]></os:value>
+		</os:store>
+		<json-logger:logger doc:name="end-update-item" doc:id="93af4a56-22e2-49a4-8e54-b3d8b04ba5d3" config-ref="JSON_Logger_Config" message="End Update-Item subflow" />
+	</sub-flow>
+	<sub-flow name="delete-item" doc:id="d2ebd05d-0bc1-447b-baf6-a42a6f95a3e3" >
+		<json-logger:logger doc:name="start-delete-item" doc:id="a2813486-d739-42d4-add0-c569709aed59" config-ref="JSON_Logger_Config" message="Start Delete-Item subflow" />
+		<flow-ref doc:name="get-client-information" doc:id="60f70780-fd46-40d7-96bd-775af1ea8ec0" name="get-client-information" target="clientInfo" />
+		<json-logger:logger doc:name="client-information-retrieved" doc:id="07f01453-9168-4bc7-a2ac-cb190356f39b" config-ref="JSON_Logger_Config" message='#["Client Information retrieved for client " ++ vars.clientCode]' >
+			<json-logger:content ><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    clientInfo: JSONLoggerModule::stringifyNonJSON(vars.clientInfo) 
+}]]]></json-logger:content>
+		</json-logger:logger>
+		<flow-ref doc:name="get-sftp-details" doc:id="cd34f06c-8652-489b-b4d7-03c940014c6e" name="get-sftp-details" target="sftpDetails" />
+		<json-logger:logger doc:name="sftp-details-retrieved" doc:id="f45bc6c8-63d2-48d8-b6f2-bb46cec5b0e2" config-ref="JSON_Logger_Config" message='#["SFTP details retrieved for client " ++ vars.clientCode]' >
+			<json-logger:content ><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    sftpDetails: JSONLoggerModule::stringifyNonJSON(vars.sftpDetails) 
+}]]]></json-logger:content>
+		</json-logger:logger>
+		<set-variable value='#[output application/json&#10;---&#10;"Mapping delete item request"]' doc:name="eventName" doc:id="42f633d5-efed-488e-a2fb-81e49553c81a" variableName="eventName" />
+		<ee:transform doc:name="map-item-request" doc:id="1b8f0c7b-1344-40d4-b59d-868f8d65ad16" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml skipNullOn="everywhere"
+
+import * from dw::core::Strings
+
+fun itemWmosMapping(value) = if(value == "Not Required") "N"
+								else if(value == "Accept If Not Present") "0"
+								else if(value == "Allow User Override") "1"
+								else null
+---
+{
+	tXML: {
+		Header: {
+			Source: "Host",
+			Action_Type: "Update",
+			Message_Type: "Item" ,
+			Company_ID: vars.clientInfo.businessUnit withMaxSize 40,
+			Msg_Locale: "English (United Kingdom)"
+		},
+		Message: {
+			Item: {
+				ItemName: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.itemCode withMaxSize 100,
+				BusinessUnit: vars.clientInfo.businessUnit withMaxSize 9,
+				Description: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.descriptions.itemDescription withMaxSize 65,
+				LongDescription: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.descriptions.longDescription withMaxSize 500,
+				BaseStorageUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.baseStorageUnitofMeasure == "Unit") "Units" else null,
+				ItemColor: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.color withMaxSize 4,
+				ItemSizeDesc: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.sizeDescription withMaxSize 15,
+				UnitWeight: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.weight as Number {format: "#.#"} default null,
+				WeightUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.uom == "LBS") "Lbs" 
+							else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.uom  == "KGS") "kgs" else null,
+				UnitVolume: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.volume as Number {format: "#.#"} default null,
+				VolumeUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Millilitres") "ml" 
+		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Centimetres") "cm3" 
+		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Feet") "cu ft" 
+		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Metres") "cu m" 
+		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Inches") "cu in" else null ,
+		   		UnitHeight: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.height as Number {format: "#.#"} default null,
+				UnitWidth: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.width as Number {format: "#.#"} default null,
+				UnitLength: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.length as Number {format: "#.#"} default null,
+				DimensionUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.uom == "Centimetre") "cm" else null,
+				QtyUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.orderingUnitofMeasure == "Unit") "Units" else null,
+				ItemBarCode: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.barcode withMaxSize 50,
+				ProductType: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.productType withMaxSize 3,
+				StdBundlQty: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.standardBundleQuantity as String {format: "#.00"} default null,
+				ItemProfileName: vars.clientInfo.businessUnit withMaxSize 30,
+				ReferenceField1: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[0] withMaxSize 25 default null,
+				ReferenceField2: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[1] withMaxSize 25 default null,
+				ReferenceField3: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[2] withMaxSize 25 default null,
+				ReferenceField4: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[3] withMaxSize 25 default null,
+				ReferenceField5: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[4] withMaxSize 25 default null,
+				ReferenceField6: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[5] withMaxSize 25 default null,
+				ReferenceField7: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[6] withMaxSize 25 default null,
+				ReferenceField8: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[7] withMaxSize 25 default null,
+				ReferenceField9: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[8] withMaxSize 25 default null,
+				ReferenceField10: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[9] withMaxSize 25 default null,
+				ReferenceNumberField1: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0]))) payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField2: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1]))) payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField3: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2]))) payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField4: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3]))) payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField5: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4]))) payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4] as String {format: "#.00000"} else null) default null,
+				CommerceAttribute1: payload.wincantonStandardWMSItemRequest.internalActionFields.actionID withMaxSize 50,
+				MarkForDeletion: "1",
+				ItemSupplierXrefList: {
+					ItemSupplierXref: {
+						SupplierItemBarcode: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.supplierCrossReferenceInformation.supplierBarcode withMaxSize 20,
+						ScanQnty: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.supplierCrossReferenceInformation.supplierQuantity as String {format: "#.00"} default null,
+						ItemBarCode: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.supplierCrossReferenceInformation.itemBarcode withMaxSize 50,
+						MarkForDeletion: "1"
+					}
+				},
+				ItemFacilityWMSList: {
+					ItemFacilityWMS: {
+						FacilityName: vars.clientInfo.facilityID,
+						ItemFacilityProfileName: vars.clientInfo.businessUnit withMaxSize 30,
+						ShelfDays: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.shelfLife.shelfLifeDays as Number withMaxSize 5 default null,
+						MarkForDeletion: "1"
+					}
+				},
+				ItemPackageList: {
+				    ItemPackage: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.*handlingUnits.*handlingUnitCase map ((hCase, index) -> {
+                        PkgUOM: "Cases",
+                        Weight: hCase.handlingUnitDimensions.weightDimensions.weight as Number {format: "#.#"} default null, 
+                        Quantity: hCase.handlingUnitDetails.unitQuantity as String {format: "#.0000"},
+                        WeightUOM: if(hCase.handlingUnitDimensions.weightDimensions.uom == "LBS")("Lbs") else if(hCase.handlingUnitDimensions.weightDimensions.uom == "KGS")("kgs") else null,
+                        Gtin: hCase.handlingUnitDetails.GTIN withMaxSize 25,
+                        UnitLength: hCase.handlingUnitDimensions.sizeDimensions.length as Number {format: "#.#"} default null,
+                        UnitHeight: hCase.handlingUnitDimensions.sizeDimensions.height as Number {format: "#.#"} default null,
+                        UnitWidth: hCase.handlingUnitDimensions.sizeDimensions.width as Number {format: "#.#"} default null,
+                        DimensionUOM: if(hCase.handlingUnitDimensions.sizeDimensions.uom == "Centimetre") "cm" else null,
+                        UnitVolume: (hCase.handlingUnitDimensions.volumeDimensions.volume) as Number {format: "#.#"} default null,
+                        VolumeUOM: if(hCase.handlingUnitDimensions.volumeDimensions.uom == "Millilitres") "ml" 
+		   							else if(hCase.handlingUnitDimensions.volumeDimensions.uom == "Cubic Centimetres") "cm3" 
+		   							else if(hCase.handlingUnitDimensions.volumeDimensions.uom == "Cubic Feet") "cu ft" 
+		                			else if(hCase.handlingUnitDimensions.volumeDimensions.uom == "Cubic Metres") "cu m" 
+		                			else if(hCase.handlingUnitDimensions.volumeDimensions.uom == "Cubic Inches") "cu in" else null,
+                        IsStandard: "1",
+                        MarkForDeletion: "1",
+                    }),
+                    ItemPackage: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.*handlingUnits.*handlingUnitPallet map ((hPallet, index) -> {
+                      	PkgUOM: "Pallets",
+                      	Weight: hPallet.handlingUnitDimensions.weightDimensions.weight as Number {format: "#.#"} default null, 
+                      	Quantity: hPallet.handlingUnitDetails.unitQuantity as String {format: "#.0000"},
+                      	WeightUOM: if(hPallet.handlingUnitDimensions.weightDimensions.uom == "LBS")("Lbs") else if(hPallet.handlingUnitDimensions.weightDimensions.uom == "KGS")("kgs") else null,
+                      	Gtin: hPallet.handlingUnitDetails.GTIN withMaxSize 25,
+                      	UnitLength: hPallet.handlingUnitDimensions.sizeDimensions.length as Number {format: "#.#"} default null,
+                      	UnitHeight: hPallet.handlingUnitDimensions.sizeDimensions.height as Number {format: "#.#"} default null,
+                      	UnitWidth: hPallet.handlingUnitDimensions.sizeDimensions.width as Number {format: "#.#"} default null,
+                      	DimensionUOM: if(hPallet.handlingUnitDimensions.sizeDimensions.uom == "Centimetre") "cm" else null,
+                      	UnitVolume: (hPallet.handlingUnitDimensions.volumeDimensions.volume) as Number {format: "#.#"} default null,
+                      	VolumeUOM: if(hPallet.handlingUnitDimensions.volumeDimensions.uom == "Millilitres") "ml" 
+		   							else if(hPallet.handlingUnitDimensions.volumeDimensions.uom == "Cubic Centimetres") "cm3" 
+		   							else if(hPallet.handlingUnitDimensions.volumeDimensions.uom == "Cubic Feet") "cu ft" 
+		                			else if(hPallet.handlingUnitDimensions.volumeDimensions.uom == "Cubic Metres") "cu m" 
+		                			else if(hPallet.handlingUnitDimensions.volumeDimensions.uom == "Cubic Inches") "cu in" else null,
+		              	IsStandard: "1",
+                        MarkForDeletion: "1",
+                    }),
+                },
+				ItemWmos: {
+					ProdSubGrp: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.subGroup withMaxSize 3,
+					SaleGrp: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.salesGroup withMaxSize 6,
+					XpireDateReqd: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.expiryDateRequired == "Prompt if Null") "0" 
+									else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.expiryDateRequired == "Always Prompt") "1"
+									else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.expiryDateRequired == "Never Prompt") "N"
+									else null,
+					ItemAttrReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.itemAttributesRequired),
+					LotReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.lotRequired),
+					ProdStatReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.productStatusRequired),
+					CntryOfOrgnReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.countryOfOriginRequired),
+					EccnNbr: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.ECCNNumber withMaxSize 6,
+					SrlNbrReq: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Not Required") "0"
+								else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Track During Outbound Only") "1"
+								else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Track During Inbound Only") "3"
+								else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Full Tracking Required") "4"
+								else null
+				}
+			}
+        }
+	}
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="debug-logger-mapped-delete-item-request" doc:id="fad40a9b-2281-4ec2-987b-fa159934dd10" config-ref="JSON_Logger_Config" message="Mapped Delete Item request" priority="DEBUG" category="support"/>
+		<os:retrieve doc:name="filename-sequence" doc:id="7714e76a-cf41-467e-a0f0-dc241d0cc91b" key="filenameSequence" objectStore="FilenameSequence-Object_store" target="filenameSequence" >
+			<os:default-value ><![CDATA[#[p('filenameSequenceStart')]]]></os:default-value>
+		</os:retrieve>
+		<ee:transform doc:name="set-filename" doc:id="ca7d44fe-c781-4af3-b0e4-ad7d6a4ad96e" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="filename" ><![CDATA[%dw 2.0
+output application/json
+---
+"/ITEM_" ++ vars.clientInfo.businessUnit ++ "_" ++ (now() as String {format: "yyyyMMddHHmmss"})
+++ "." ++ vars.filenameSequence ++ ".xml"
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+<json-logger:logger doc:name="debug-logger-filename" doc:id="267af684-2e41-4027-9b6e-51e958e10706" config-ref="JSON_Logger_Config" message="Filename " priority="DEBUG" category="support">
+			<json-logger:content><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+    filename: JSONLoggerModule::stringifyNonJSON(vars.filename) 
+}]]]></json-logger:content>
+		</json-logger:logger>
+		<set-variable value='#[output application/json&#10;---&#10;"Dropping file " ++ vars.filename ++ " into SFTP"]' doc:name="eventName" doc:id="8a04b6b5-0d78-4cdb-a59b-c4f2e0d15a92" variableName="eventName" />
+		<until-successful maxRetries="${retry.numOfRetries}" doc:name="Until Successful" doc:id="711913c8-e535-42ca-b841-a25a5c3a28bf" millisBetweenRetries="${retry.milliseconds}">
+			<sftp:write doc:name="write-to-manhattan-sftp" doc:id="d3685476-e97b-4997-9fbf-ebfd2cdaf292" config-ref="MH_SFTP-config" path="#[vars.sftpDetails.sftpDestinationFolder ++ vars.filename]">
+		</sftp:write>
+		</until-successful>
+		<ee:transform doc:name="set-next filename-sequence" doc:id="8fc10172-af86-4fa7-9cdf-8db52a864234" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="filenameSequence" ><![CDATA[%dw 2.0
+output application/json
+---
+
+if(vars.filenameSequence as Number != 999)((vars.filenameSequence as Number + 1) as String {format: "000"})
+else(p('filenameSequenceStart'))]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<os:store doc:name="filename-sequence" doc:id="7ef437a9-89ab-400e-b3e5-1c821084f84f" key="filenameSequence" objectStore="FilenameSequence-Object_store" >
+			<os:value ><![CDATA[#[vars.filenameSequence]]]></os:value>
+		</os:store>
+		<json-logger:logger doc:name="end-delete-item" doc:id="96f916a4-beec-4073-aeec-2c8cae60329d" config-ref="JSON_Logger_Config" message="End Delete-Item subflow" />
+	</sub-flow>
+
+</mule>

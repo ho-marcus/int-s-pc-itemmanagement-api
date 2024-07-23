@@ -1,0 +1,9 @@
+#%RAML 1.0 Trait
+usage: Apply this trait to each API so that it has a transaction id to trace it's flow within the enterprise.
+headers:
+  consumerName:
+    description: The Name/ID of the API consumer/requester
+    type: string
+    maxLength: 128
+    required: true
+    example: a934bnj3n45ou5i7nln443b54b

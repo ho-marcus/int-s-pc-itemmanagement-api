@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd">
+    <flow name="int-s-mh2020-itemmanagement-api-main">
+        <http:listener path="${https.path}" config-ref="int-s-mh2020-itemmanagement-api-httpListenerConfig">
+            <http:response statusCode="#[attributes.statusCode default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[attributes.statusCode default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <logger level="INFO" doc:name="correlation-id" doc:id="db8d9761-bdc5-4057-a1d7-a3f0ab1e19a5" message="Correlation ID: #[&quot;Correlation ID&quot;: correlationId]" />
+        <apikit:router config-ref="int-s-mh2020-itemmanagement-api-config" />
+        <error-handler ref="global-error-handler" />
+    </flow>
+    <flow name="int-s-mh2020-itemmanagement-api-console">
+        <http:listener path="/console/*" config-ref="int-s-mh2020-itemmanagement-api-httpListenerConfig">
+            <http:response statusCode="#[attributes.statusCode default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="int-s-mh2020-itemmanagement-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform doc:name="resource-not-found">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                        <ee:set-attributes><![CDATA[%dw 2.0
+output application/json
+---
+{
+	statusCode: 404
+}]]></ee:set-attributes>
+                    </ee:message>
+                    <ee:variables />
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="get:\healthCheck:int-s-mh2020-itemmanagement-api-config">
+        <json-logger:logger doc:name="start-of-get:\healthCheck" doc:id="4182e0b4-059d-412c-a7fb-c74402290d9b" config-ref="JSON_Logger_Config" message="Start of get:\healthCheck">
+            <json-logger:content><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+}]]]></json-logger:content>
+        </json-logger:logger>
+        <ee:transform doc:name="get-status" doc:id="2f039351-dbad-45c2-998c-4bdfd39d0b6f" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  status: "OK",
+  version: "v1",
+  time: now()
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <json-logger:logger doc:name="exit-of-get:\healthCheck" doc:id="802d062d-2421-4ab8-b25b-ea0de02ad940" config-ref="JSON_Logger_Config" message="Exit of get:\healthCheck">
+            <json-logger:content><![CDATA[#[import modules::JSONLoggerModule output application/json ---
+{
+}]]]></json-logger:content>
+        </json-logger:logger>
+    </flow>
+    <flow name="get:\item\(itemCode)\status:int-s-mh2020-itemmanagement-api-config">
+        <json-logger:logger doc:name="start-of-get:\item\(itemCode)\status" doc:id="29d4baf1-3eaa-4214-9535-b7d45b52067b" config-ref="JSON_Logger_Config" message="Start of get:\item\(itemCode)\status" />
+        <ee:transform doc:name="set-variables">
+            <ee:variables>
+                <ee:set-variable variableName="itemCode"><![CDATA[attributes.uriParams.'itemCode']]></ee:set-variable>
+                <ee:set-variable variableName="clientCode"><![CDATA[attributes.headers."clientCode"]]></ee:set-variable>
+                <ee:set-variable variableName="mode"><![CDATA[%dw 2.0
+output application/json
+---
+"sync"]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <flow-ref doc:name="get-item-status" doc:id="a8b8c987-929e-4f52-ae3d-dabd5ac3e7ef" name="get-item-status" />
+        <flow-ref doc:name="remove-variables" doc:id="619f200d-0327-41dc-a0e6-9af3a4a55a24" name="remove-variables" />
+        <json-logger:logger doc:name="exit-of-get:\item\(itemCode)\status" doc:id="39f72db2-87dc-460a-9232-faf19df07352" config-ref="JSON_Logger_Config" message="Exit of get:\item\(itemCode)\status" />
+    </flow>
+    <flow name="post:\item:application\xml:int-s-mh2020-itemmanagement-api-config">
+        <json-logger:logger doc:name="start-of-post:\item" doc:id="65dee7eb-f800-4502-b503-fadfdfdc8d30" config-ref="JSON_Logger_Config" message="Start of post:\item" />
+        <ee:transform doc:name="set-variables" doc:id="fb715202-e8d6-449a-9134-128f17c38ec2">
+            <ee:message />
+            <ee:variables>
+                <ee:set-variable variableName="clientCode"><![CDATA[attributes.headers."clientCode"]]></ee:set-variable>
+                <ee:set-variable variableName="itemCode"><![CDATA[%dw 2.0
+output application/json
+---
+payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.itemCode]]></ee:set-variable>
+                <ee:set-variable variableName="mode"><![CDATA[%dw 2.0
+output application/json
+---
+"sync"]]></ee:set-variable>
+                <ee:set-variable variableName="status"><![CDATA[%dw 2.0
+output application/json
+---
+"CREATE"]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <flow-ref doc:name="create-item" doc:id="bdc2ef4a-7749-49dd-98c9-f38bba989242" name="create-item" />
+        <ee:transform doc:name="final-response" doc:id="b24b8db6-b63e-49af-936a-8e35bb433c34">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "The item " ++ vars.itemCode ++ " was created successfully"
+}]]></ee:set-payload>
+                <ee:set-attributes><![CDATA[%dw 2.0
+output application/json
+---
+{
+	statusCode: 202
+}]]></ee:set-attributes>
+            </ee:message>
+            <ee:variables />
+        </ee:transform>
+        <flow-ref doc:name="remove-variables" doc:id="3b940f3b-7f71-4c10-865f-a169a7fd8512" name="remove-variables" />
+        <json-logger:logger doc:name="exit-of-post:\item" doc:id="9a2af0ac-a39a-4633-b1de-10e8684cd740" config-ref="JSON_Logger_Config" message="Exit of post:\item" />
+    </flow>
+    <flow name="put:\item\(itemCode):application\xml:int-s-mh2020-itemmanagement-api-config">
+        <json-logger:logger doc:name="start-of-put:\item\(itemCode)" doc:id="6d9d7bc8-b70e-4cf6-8e42-26aa7ae72e57" config-ref="JSON_Logger_Config" message="Start of put:\item\(itemCode)" />
+        <ee:transform doc:name="set-variables">
+            <ee:variables>
+                <ee:set-variable variableName="itemCode"><![CDATA[attributes.uriParams.'itemCode']]></ee:set-variable>
+                <ee:set-variable variableName="clientCode"><![CDATA[attributes.headers."clientCode"]]></ee:set-variable>
+                <ee:set-variable variableName="mode"><![CDATA[%dw 2.0
+output application/json
+---
+"sync"]]></ee:set-variable>
+                <ee:set-variable variableName="status"><![CDATA[%dw 2.0
+output application/json
+---
+"UPDATE"]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <flow-ref doc:name="update-item" doc:id="0b8393fc-020c-4e7d-a018-4910645fd4fa" name="update-item" />
+        <ee:transform doc:name="final-response">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "The item " ++ vars.itemCode ++ " was updated successfully"
+}]]></ee:set-payload>
+                <ee:set-attributes><![CDATA[%dw 2.0
+output application/json
+---
+{
+	statusCode: 202
+}]]></ee:set-attributes>
+            </ee:message>
+        </ee:transform>
+        <flow-ref doc:name="remove-variables" doc:id="313e9859-61f1-464d-ba84-53a7e20faafe" name="remove-variables" />
+        <json-logger:logger doc:name="exit-of-put:\item\(itemCode)" doc:id="d09a9614-7d6b-4d9b-9b79-7b8d0f33855c" config-ref="JSON_Logger_Config" message="Exit of put:\item\(itemCode)" />
+    </flow>
+    <flow name="delete:\item\(itemCode):application\xml:int-s-mh2020-itemmanagement-api-config">
+        <json-logger:logger doc:name="start-of-delete:\item\(itemCode)" doc:id="f8bfceaa-4a7f-4540-87ce-96ac463bec36" config-ref="JSON_Logger_Config" message="Start of delete:\item\(itemCode)" />
+        <ee:transform doc:name="set-variables">
+            <ee:variables>
+                <ee:set-variable variableName="itemCode"><![CDATA[attributes.uriParams.'itemCode']]></ee:set-variable>
+                <ee:set-variable variableName="clientCode"><![CDATA[attributes.headers."clientCode"]]></ee:set-variable>
+                <ee:set-variable variableName="mode"><![CDATA[%dw 2.0
+output application/json
+---
+"sync"]]></ee:set-variable>
+                <ee:set-variable variableName="status"><![CDATA[%dw 2.0
+output application/json
+---
+"CANCEL"]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <flow-ref doc:name="delete-item" doc:id="5a39f718-aa9a-4081-88c3-e2a1c536f57b" name="delete-item" />
+        <ee:transform doc:name="final-response">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "The item " ++ vars.itemCode ++ " was cancelled successfully"
+}]]></ee:set-payload>
+                <ee:set-attributes><![CDATA[%dw 2.0
+output application/json
+---
+{
+	statusCode: 200
+}]]></ee:set-attributes>
+            </ee:message>
+        </ee:transform>
+        <flow-ref doc:name="remove-variables" doc:id="2a467c79-7d0c-4428-8c39-c2b7704bd88b" name="remove-variables" />
+        <json-logger:logger doc:name="exit-of-delete:\item\(itemCode)" doc:id="fae51d6b-d334-4235-b2db-93b2c7fe091c" config-ref="JSON_Logger_Config" message="Exit of delete:\item\(itemCode)" />
+    </flow>
+</mule>

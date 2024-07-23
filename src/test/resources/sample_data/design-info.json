@@ -1,0 +1,17 @@
+{
+  "sampleData": {
+    "1b8f0c7b-1344-40d4-b59d-868f8d65ad16": {
+      "payload": "sample_data/wincantonStandardWMSItemRequest_1.xml"
+    },
+    "e280b655-2b7c-4066-9c4b-d64dcfa1c57d": {
+      "payload": "sample_data/json.json"
+    },
+    "3b8f032d-433f-4b64-ba31-acb27e47e6d8": {
+      "payload": "sample_data/wincantonstandardwmsitemrequest.xml"
+    },
+    "0bfbb3cb-a9b4-4728-82aa-0fa3f9472d90": {
+      "payload": "sample_data/json_1.json",
+      "vars-itemCode": "sample_data/defaultstringtype.dwl"
+    }
+  }
+}

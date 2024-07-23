@@ -1,0 +1,8 @@
+#%RAML 1.0 Trait
+    responses:
+      400:
+        description: This status code and error message will be returned in case if the API encounters a bad request.
+        body:
+          application/json:
+            type: !include ../definitions/commonFaultMessages.raml
+            example: !include ../examples/400.json

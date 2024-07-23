@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wincantonStandardWMSItemStatusResponse xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <wincantonStandardWMSItemStatus>
+        <itemCode>itemCode0</itemCode>
+        <descriptions>
+            <longDescription>longDescription0</longDescription>
+            <itemDescription>itemDescription0</itemDescription>
+        </descriptions>
+        <itemStatus>Active</itemStatus>
+        <lastUpdateID>lastUpdateID0</lastUpdateID>
+        <lastUpdateDateTime>2022-05-04T18:13:51.0</lastUpdateDateTime>
+    </wincantonStandardWMSItemStatus>
+</wincantonStandardWMSItemStatusResponse>

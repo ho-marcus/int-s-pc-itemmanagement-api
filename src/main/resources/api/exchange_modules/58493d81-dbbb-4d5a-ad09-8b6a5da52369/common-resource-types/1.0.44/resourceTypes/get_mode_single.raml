@@ -1,0 +1,7 @@
+#%RAML 1.0 ResourceType
+    
+    description: <<getRecordSummary>>
+    get:
+      description: <<getRecordDescription>>
+      is: [ success_200: {recordType: <<getRecordType>>, recordExample: <<getRecordExample>>}, 
+          err_400,err_401,err_404,err_405,err_406,err_407,err_415,err_500,err_503,err_504  ]

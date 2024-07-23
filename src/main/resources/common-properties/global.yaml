@@ -1,0 +1,32 @@
+api:
+  version: "v1"
+
+https:
+  host: "0.0.0.0"
+  private:
+    port: "8092"
+  path: "/api/${api.version}/*"
+
+
+json:
+  logger:
+    application:
+      name: "int-s-mh2020-itemmanagement-api"
+      version: "v1" 
+
+retry:
+  numOfRetries: "5"
+  milliseconds: "3000"
+  queueRetryCount: "3"
+  topicRetryCount: "3"
+
+notifyOps: "true"  
+
+filenameSequenceStart: "000"
+
+wmsSourceSystem: "MANHATTAN2020"
+
+system:
+  integrationServices:
+    getClientInfoPath: "/warehouse/client/{clientCode}"
+    getRecordStatusPath: "/warehouse/status"

@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:sns="http://www.mulesoft.org/schema/mule/sns" xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/sns http://www.mulesoft.org/schema/mule/sns/current/mule-sns.xsd">
+	<flow name="error-main-error-handler" doc:id="77bf999a-9535-4c74-9408-37fd660aa953" >
+		<flow-ref doc:name="error-handler-before-error-type" doc:id="93afa4bb-4235-4dba-9a75-798e49d7eaac" name="error-handler-before-error-type"/>
+		<flow-ref doc:name="error-handler-route" doc:id="b803906c-f33e-48c5-9ca4-086dc8171da1" name="error-handler-route"/>
+		<flow-ref doc:name="error-handler-after-error-type" doc:id="884f57f1-c1eb-4069-883c-dbd5de752882" name="error-handler-after-error-type"/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="b5f54598-39b0-4120-98d9-2313989e3b2e" >
+				<ee:transform doc:name="unexpected-error" doc:id="4b95777e-7233-4ffb-962b-c2d00d6ada3b" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+		status: "500",
+		title:  "Unexpected error",
+		correlationId: correlationId,
+}]]></ee:set-payload>
+						<ee:set-attributes ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	statusCode: 500
+}]]></ee:set-attributes>
+					
+</ee:message>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+	
+</flow>
+	
+	<sub-flow name="error-handler-before-error-type" doc:id="1795569b-7842-49d3-946d-c7c03e880787" >
+		<json-logger:logger doc:name="Logger" doc:id="f5c6be03-b506-4b93-ac79-3ec09fc61645" config-ref="JSON_Logger_Config" message="In error-handler-before-errorTypeFlow" tracePoint="EXCEPTION">
+		</json-logger:logger>
+		<ee:transform doc:name="set-generic-variables" doc:id="e7c6128f-2f36-4312-83b9-15fa21624fc8">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="errorNamespace"><![CDATA[%dw 2.0
+output application/java
+---
+if(vars.errorNamespace != null)(vars.errorNamespace) else(error.errorType.namespace)]]></ee:set-variable>
+				<ee:set-variable variableName="errorIdentifier" ><![CDATA[%dw 2.0
+output application/java
+---
+if(vars.errorIdentifier != null)(vars.errorIdentifier) else(error.errorType.identifier)
+
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	
+</sub-flow>
+	<sub-flow name="error-handler-after-error-type" doc:id="1e46613b-187a-42d7-b61c-b497cb821218" >
+		<json-logger:logger doc:name="debug-logger" doc:id="1da6262f-0d33-4f94-8a1b-c22a1f9df5c4" config-ref="JSON_Logger_Config" message="In error-handler-after-errorTypeFlow" tracePoint="EXCEPTION" priority="DEBUG" category="support"/>
+		<choice doc:name="propagate-error?" doc:id="81950500-99ac-405c-b419-f421a4269c68" >
+			<when expression="#[error.errorMessage.payload.status != null]">
+				<ee:transform doc:name="set-httpStatus-and-payload" doc:id="532225f7-4b7e-45c7-9f48-2c7e7bfc315d" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+error.errorMessage.payload]]></ee:set-payload>
+						<ee:set-attributes ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	statusCode: error.errorMessage.payload.status,
+	remoteAddress: attributes.remoteAddress
+}]]></ee:set-attributes>
+
+					</ee:message>
+					<ee:variables >
+					</ee:variables>
+				</ee:transform>
+				<json-logger:logger doc:name="debug-logger" doc:id="081e03a4-a36f-4e4c-9336-b89e0bbeeb5f" config-ref="JSON_Logger_Config" message="Error payload" tracePoint="EXCEPTION" priority="DEBUG" category="support"/>
+			
+</when>
+			<otherwise >
+				<ee:transform doc:name="set-httpStatus-and-error-message" doc:id="c5272b03-4a1c-430d-87e1-62a4174ab03d">
+			<ee:message>
+						<ee:set-attributes ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	statusCode: payload.httpStatus,
+	remoteAddress: attributes.remoteAddress
+}]]></ee:set-attributes>
+
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="errorMessage"><![CDATA[%dw 2.0
+output application/java
+---
+payload.errorMessage]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+				<json-logger:logger doc:name="debug-logger" doc:id="f45daf41-4a18-4f15-a852-e0e600b0edf6" config-ref="JSON_Logger_Config" message="Error payload" tracePoint="EXCEPTION" priority="DEBUG" category="support"/>
+				<flow-ref doc:name="error-handler-override-error" doc:id="d2d74f15-ff30-45b7-9dd5-51d73295f7aa" name="error-handler-override-error" />
+			
+</otherwise>
+		</choice>
+	
+</sub-flow>
+	<sub-flow name="error-handler-override-error" doc:id="78215056-fc76-4afa-babf-d33129cb3bd2" >
+		<json-logger:logger doc:name="debug-logger" doc:id="f91a45f9-d754-42cb-9359-37fc0bd5c218" config-ref="JSON_Logger_Config" message="In error-handler-extension-errorFlow" tracePoint="EXCEPTION" priority="DEBUG" category="support"/>
+		<choice doc:name="override-standard-final-error-response?" doc:id="17482b3f-1b0c-4fbc-a448-29f573fa6715" >
+			<when expression="#[Mule::p('errors.override.response') == 'true']">
+				<ee:transform doc:name="override-standard-final-error-response" doc:id="7d412ea3-b17a-4f40-9104-f5c57cbe96c2" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml skipNullOn="everywhere"
+---
+wincantonStandardWMSItemStatusResponse: {
+    responseMessage: {
+        message: vars.errorMessage,
+        description: if(error.description contains "https://")(null)else(error.description),
+        correlationId: correlationId,
+    }
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<json-logger:logger doc:name="Logger" doc:id="c3c5d1c0-8602-4b5b-98ac-f3ceccee4572" config-ref="JSON_Logger_Config" message="Overriden error response"/>
+			
+</when>			
+			<otherwise>
+				<ee:transform doc:name="standard-final-error-response" doc:id="21f61727-8372-4808-b67a-83087bc03c13">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: attributes.statusCode,
+	title: vars.errorMessage default "System error",
+	detail: if(error.detailedDescription contains "until-successful")(error.suppressedErrors.muleMessage.typedValue.detail[0])else(error.detailedDescription),
+	description: if(error.description contains "https://")(error.suppressedErrors.muleMessage.typedValue.description[0])else(error.description),
+	errorType: if(error.errorType.identifier == "RETRY_EXHAUSTED")(error.suppressedErrors.errorType.identifier[0])else(error.errorType.identifier),
+	correlationId: correlationId
+}
+ ]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<json-logger:logger doc:name="Logger" doc:id="0acaf590-52c9-47e8-a90c-4e0a1292db46" config-ref="JSON_Logger_Config" message="Default error log" tracePoint="EXCEPTION">
+		</json-logger:logger>
+				<choice doc:name="raise-error-to-ops?" doc:id="91705bbd-e902-4884-9866-b1197bb56dfd" >
+					<when expression='#[(payload.status == "500") or (["SQS", "SFTP", "MULE"] contains error.errorType.namespace) or (["SQS", "SFTP", "MULE"] contains error.suppressedErrors.errorType.namespace[0])]'>
+						<flow-ref doc:name="error-handler-push-to-global-error-topic" doc:id="0a361a1e-5a45-4e0b-afd4-75bc1e640575" name="error-handler-push-to-global-error-topic" target="topicResponse" />
+						<flow-ref doc:name="create-cloudhub-error-notification" doc:id="c180a0fe-8cbb-4178-ae12-a201b86a25e4" name="create-cloudhub-error-notification" target="alertResponse"/>
+					</when>
+					<otherwise >
+						<json-logger:logger doc:name="debug-logger" doc:id="79288866-5158-4496-9cac-83253a7615cd" config-ref="JSON_Logger_Config" message="Continue " tracePoint="EXCEPTION" priority="DEBUG" category="support"/>
+					</otherwise>
+				</choice>
+			
+</otherwise>
+		</choice>
+		<ee:transform doc:name="final-response" doc:id="ea8d1959-65d5-47f9-8e3d-efe4720b598f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="error-handler-push-to-global-error-topic" doc:id="8b580289-7485-4c37-87a3-8a19392a1487" >
+		<ee:transform doc:name="set-errorType" doc:id="263f7dd1-0e32-4724-974f-13553b187119" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="errorType" ><![CDATA[%dw 2.0
+output application/json
+---
+if (["BUSINESS"] contains error.errorType.namespace)"BUSINESS" 
+else "TECHNICAL"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="set-error-payload" doc:id="c159069b-f7da-4cf9-8ec3-fbb761cbdcd5" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+import * from dw::core::Strings
+---
+{
+	eventName: vars.eventName,
+	errorMessage: vars.errorMessage,
+	errorType: vars.errorType,
+	errorCode: attributes.statusCode,
+	businessObjectId: if(vars.itemCode != null)(vars.itemCode)else(vars.itemCode),
+	correlationId: correlationId default uuid(),
+	mode: if(vars.mode != null)(vars.mode)else("sync"),
+	clientName: authentication.properties.clientName, 
+	remoteIP: attributes.remoteAddress, 
+	appName: p('app.name'),
+	interfaceId: if(vars.status == "CREATE")("WN-WMS-FL-001")else if(vars.status == "UPDATE")("WN-WMS-FL-003")else if(vars.status == "CANCEL")("WN-WMS-FL-004")else("WN-WMS-FL-002"),
+	systemDate: now() as LocalDateTime,
+	environmentName: p('mule.env'),
+	operation: if(vars.status == "CREATE")("Create Item")else if(vars.status == "UPDATE")("Update Item")else if(vars.status == "CANCEL")("Cancel Item")else("Read Item Status"),
+	businessUnit: "WMS",
+	clientCode: vars.clientCode,
+	flowName: substringBefore(error.failingComponent,"/")
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="debug-logger-global-error-topic-message" doc:id="46840d74-3cd2-4f3c-9d22-76cee2426134" config-ref="JSON_Logger_Config" message="Global error topic message" priority="DEBUG" category="support"/>
+		<try doc:name="Try" doc:id="912254d5-3d61-4a80-98f1-a0c7e9b88a97" >
+			<until-successful maxRetries="${retry.topicRetryCount}" doc:name="Until Successful" doc:id="0492e18b-b728-40d8-a9af-b0d0a91384c9" millisBetweenRetries="${retry.milliseconds}" >
+				<sns:publish doc:name="publish-to-global-error-topic" doc:id="b83c166f-443a-4ae7-9c00-71f7e7ae084f" config-ref="Amazon_SNS_configuration-global_error_topic" topicArn="${awsSNS.globalErrorTopicArn}" >
+					<sns:message ><![CDATA[#[output application/java
+---
+payload.^raw as String]]]></sns:message>
+				</sns:publish>
+			</until-successful>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="eaa53aa1-3a84-47a6-8b91-20d29eea5f41" type="ANY" >
+					<json-logger:logger doc:name="debug-logger-continue" doc:id="8f57e047-6c82-4238-a657-479e23e1dfb7" config-ref="JSON_Logger_Config" message="Publish to topic has failed" priority="DEBUG" category="support"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</sub-flow>
+
+</mule>

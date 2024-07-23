@@ -1,0 +1,18 @@
+#%RAML 1.0 Trait
+
+headers:
+  X-TRANSACTION-ID:
+    description: Transaction ID is a unique identifier that defines each transaction. This ID is be used by the client to add meaningful information (Eg. Order Number), into the ID to analyze tracked events in Runtime
+    type: string
+    maxLength: 50
+    minLength: 5
+    required: false
+    example: 3F2504E0-4F89-11D3-9A0C-0305E82C3301
+
+  X-CORRELATION-ID:
+    description: Correlation ID is a unique identifier assigned to all messages and events, allowing them to be tracked internally. This ID is generated within Mulesoft and can be used to trace all events through all connecting API (Eg. Process to System layers)
+    type: string
+    maxLength: 50
+    minLength: 5
+    required: false
+    example: 3F2504E0-4F89-11D3-9A0C-0305E82C3301    

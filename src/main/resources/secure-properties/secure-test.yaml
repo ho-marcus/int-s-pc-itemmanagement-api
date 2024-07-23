@@ -1,0 +1,31 @@
+tls:
+ alias: "mule-server"
+ keyPassword: "![DT/NLqU2X2ez7Yp7CGxOWg==]"
+ password: "![DT/NLqU2X2ez7Yp7CGxOWg==]"
+ keystoreFilePath: "certificates/server-keystore.jks"
+ truststoreFilePath: "certificates/client-truststore.jks"
+ 
+
+system:
+  integrationServices:
+    clientID: "e991a97b79fe4bcfae2402cc72e42d02"
+    clientSecret: "![oprWXUxh0T0fv6Xgo2vc2ZfTLAXePR8BvVx8OXr9jATF3FwCIOz15w==]" 
+ 
+integrationDB:
+  host: "wapiintt.clrb0tueogyc.eu-west-2.rds.amazonaws.com"
+  port: "1521"
+  username: "mulewmsintegrationt"
+  password: "![6Xay3l0LUUUljebIaicWZcXcXAIg7PXn]" 
+  instance: "WAPIINTT"
+  
+anypoint:
+  client_id: "c41d24ee415a4a2f8fd24ca2448bdfe6"
+  client_secret: "![Mr3xp8frd73kHHAcesAXJ7n5evL58NwMTq1i+x1Qu1DF3FwCIOz15w==]"
+  
+aws:
+  sqs:
+    accessKey: "AKIA4Q5ID72HOCDSWKHI"
+    secretKey: "![foU/O4VZh/dTWmdIpsjePR+OW4NfqKEoP4Q7X2pfHu+FX2wVPA2NAMXcXAIg7PXn]"
+  sns:
+    accessKey: "AKIA4Q5ID72HC6UXBTPZ"
+    secretKey: "![rMeCo5rMQ6vR95mTO0CN/IOnS4dh2PuM6zrKjOYZVnnqzSS1R2POfcXcXAIg7PXn]"

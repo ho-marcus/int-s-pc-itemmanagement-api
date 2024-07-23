@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wincantonStandardWMSItemRequest xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <wincantonStandardWMSItem>
+        <itemCode>12356503</itemCode>
+        <status>Active</status>
+        <descriptions>
+            <longDescription>lXfhIdfCHiOQ2FxrASnkA_WcuaQPToZsquRCW8aMKIQGWYl9hQrNr107lRjKpsfH</longDescription>
+            <itemDescription>QH04</itemDescription>
+        </descriptions>
+        <baseStorageUnitofMeasure>Unit</baseStorageUnitofMeasure>
+        <orderingUnitofMeasure>Unit</orderingUnitofMeasure>
+        <color>ABC</color>
+        <sizeDescription>txzJa4r</sizeDescription>
+        <barcode>_9.crwfov3fyT4gzrs0PGcDj1LRqEOXvaa9q4tYIF7</barcode>
+        <unitDimensions>
+            <handlingUnitDimensions>
+                <sizeDimensions>
+                    <length>60170145.43</length>
+                    <width>0423.10</width>
+                    <height>57687.54</height>
+                    <uom>Centimetre</uom>
+                </sizeDimensions>
+                <weightDimensions>
+                    <weight>949.3718</weight>
+                    <uom>LBS</uom>
+                </weightDimensions>
+                <volumeDimensions>
+                    <volume>2580380.6727</volume>
+                    <uom>Cubic Centimetres</uom>
+                </volumeDimensions>
+            </handlingUnitDimensions>
+        </unitDimensions>
+        <handlingUnits>
+            <handlingUnitCase>
+                <handlingUnitDetails>
+                    <unitQuantity>2015756123</unitQuantity>
+                    <GTIN>t_YkQl1ntFTarQrwahN0Kk_j</GTIN>
+                </handlingUnitDetails>
+                <handlingUnitDimensions>
+                  <sizeDimensions>
+                      <length>60170145.43</length>
+                      <width>0423.10</width>
+                      <height>57687.54</height>
+                      <uom>Centimetre</uom>
+                  </sizeDimensions>
+                  <weightDimensions>
+                      <weight>949.3718</weight>
+                      <uom>LBS</uom>
+                  </weightDimensions>
+                  <volumeDimensions>
+                      <volume>2580380.6727</volume>
+                      <uom>Cubic Centimetres</uom>
+                  </volumeDimensions>
+                </handlingUnitDimensions>
+            </handlingUnitCase>
+            <handlingUnitPallet>
+                <handlingUnitDetails>
+                    <unitQuantity>2015756428</unitQuantity>
+                    <GTIN>t_YkQl1ntFTarQrwahN0Kk_j</GTIN>
+                </handlingUnitDetails>
+                <handlingUnitDimensions>
+                  <sizeDimensions>
+                      <length>60170145.43</length>
+                      <width>0423.10</width>
+                      <height>57687.54</height>
+                      <uom>Centimetre</uom>
+                  </sizeDimensions>
+                  <weightDimensions>
+                      <weight>345.3718</weight>
+                      <uom>KGS</uom>
+                  </weightDimensions>
+                  <volumeDimensions>
+                      <volume>2580416.6727</volume>
+                      <uom>Cubic Centimetres</uom>
+                  </volumeDimensions>
+                </handlingUnitDimensions>
+            </handlingUnitPallet>
+        </handlingUnits>
+        <shelfLife>
+            <shelfLifeIndicator>0</shelfLifeIndicator>
+            <shelfLifeDays>12045</shelfLifeDays>
+        </shelfLife>
+        <referenceFields>
+            <referenceStrings>
+                <referenceFieldString>fjhghv</referenceFieldString>
+                <referenceFieldString>Y6glGR3geAKVFzA</referenceFieldString>
+                <referenceFieldString>Y7QU7Cgze3oEch8Hj</referenceFieldString>
+                <referenceFieldString>Whht</referenceFieldString>
+                <referenceFieldString>Jea_pThDX.tl46GPvDiFf</referenceFieldString>
+                <referenceFieldString>SFVAkubVjUJG</referenceFieldString>
+                <referenceFieldString>aqBT1IKIfRLxzCW</referenceFieldString>
+                <referenceFieldString>KFkAj6z</referenceFieldString>
+                <referenceFieldString>a9t</referenceFieldString>
+                <referenceFieldString>HbXkIKKjFDh0qZVWk3AeLp</referenceFieldString>
+            </referenceStrings>
+            <referenceNumbers>
+                <referenceFieldNumber>82873744.91169</referenceFieldNumber>
+                <referenceFieldNumber>-74086550.3280</referenceFieldNumber>
+                <referenceFieldNumber>-77318192.1364</referenceFieldNumber>
+                <referenceFieldNumber>96702676.30178</referenceFieldNumber>
+                <referenceFieldNumber>75592925.82792</referenceFieldNumber>
+            </referenceNumbers>
+        </referenceFields>
+        <supplierCrossReferenceInformation>
+            <supplierBarcode>Kd0ommK</supplierBarcode>
+            <supplierQuantity>1922848452</supplierQuantity>
+            <itemBarcode>_mRSa6ygqLKo</itemBarcode>
+        </supplierCrossReferenceInformation>
+        <attributes>
+            <standardBundleQuantity>34582777</standardBundleQuantity>
+            <productType>B8x</productType>
+            <subGroup>MY</subGroup>
+            <salesGroup>xgY0L</salesGroup>
+            <ECCNNumber>r31</ECCNNumber>
+            <expiryDateRequired>Never Prompt</expiryDateRequired>
+            <itemAttributesRequired>Accept If Not Present</itemAttributesRequired>
+            <lotRequired>Accept If Not Present</lotRequired>
+            <productStatusRequired>Accept If Not Present</productStatusRequired>
+            <countryOfOriginRequired>Accept If Not Present</countryOfOriginRequired>
+            <serialNumberTrackingRequired>Track During Inbound Only</serialNumberTrackingRequired>
+        </attributes>
+    </wincantonStandardWMSItem>
+    <internalActionFields>
+        <actionID>actionID0</actionID>
+        <actionDateTime>2024-12-19T09:34:46</actionDateTime>
+    </internalActionFields>
+</wincantonStandardWMSItemRequest>

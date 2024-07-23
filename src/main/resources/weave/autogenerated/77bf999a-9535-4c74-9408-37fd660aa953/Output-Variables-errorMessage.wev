@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_77bf999a_9535_4c74_9408_37fd660aa953_Output_Variables_errorMessage = Any
+

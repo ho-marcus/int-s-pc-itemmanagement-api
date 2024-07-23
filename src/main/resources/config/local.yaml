@@ -1,0 +1,18 @@
+api:
+  id: "18833019"
+  
+MHSFTP:
+  root: "/incoming/"
+  
+  
+system:
+  host: "wincanton-nonprod-dlb.lb.anypointdns.net" #--locally
+ #host: "internal-wincanton-nonprod-dlb.lb.anypointdns.net" #--deploying
+  integrationServices:
+    port: "443"
+    timeout: "30000"
+    clientID: "2d6386a4be954707b09a1d7a68323445"
+    clientSecret: "9134d1415049423B9BB552Dd781540e2"
+    basepath: "/int-s-glb-integrationservices-api-dev/api"
+    getClientInfoPath: "/warehouse/client/{clientCode}"
+    getRecordStatusPath: "/warehouse/status"

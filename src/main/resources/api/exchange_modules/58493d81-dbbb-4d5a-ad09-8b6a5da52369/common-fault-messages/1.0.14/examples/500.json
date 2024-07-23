@@ -1,0 +1,15 @@
+{
+  "statusCode": 500,
+  "statusType": "Internal Server Error",
+  "statusMessage": "The server encountered an unexpected condition which prevented it from fulfilling the request. Refer to the error details response to identify exception details.",
+  "transactionID": "3F2504E0-4F89-11D3-9A0C-0305E82C3301",
+  "correlationID": "84ccd6ea-a5d3-4d2b-b675-fc471f3cb0e6",	
+  "statusDetails": [
+    {
+      "messageID": "X",
+      "messageType": "Error",
+      "messageDetails": "Help URL-"
+    }
+
+  ]
+}

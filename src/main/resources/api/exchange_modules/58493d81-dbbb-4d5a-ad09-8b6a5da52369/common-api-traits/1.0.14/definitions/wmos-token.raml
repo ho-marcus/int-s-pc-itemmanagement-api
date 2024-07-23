@@ -1,0 +1,9 @@
+#%RAML 1.0 Trait
+usage: Apply this trait to each WMOS API to pass authorised context ID to access Manhattan Associates WMOS.
+description: The service endpoint requires context ID for every API request.
+headers:
+  CONTEXT-ID:
+    description: Security Token for Manhattan Associates WMOS
+    type: string
+    required: true
+    example: 3F2504E0-4F89-11D3-9A0C-0305E82C3301

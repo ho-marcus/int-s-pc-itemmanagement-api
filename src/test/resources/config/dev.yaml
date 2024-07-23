@@ -1,0 +1,42 @@
+api:
+  id: "18833019"
+  domain: "int-s-mh2020-itemmanagement-api-dev"
+  
+
+environment:
+  id: "ec9476c2-8722-4930-ad59-576272769891"
+  
+mhSftp:
+  timeout: "30000"
+  
+
+system:
+  host: "wincanton-nonprod-dlb.lb.anypointdns.net" #--locally
+ #host: "internal-wincanton-nonprod-dlb.lb.anypointdns.net" #--deploying
+  integrationServices:
+    port: "443"
+    timeout: "30000"
+    basepath: "/int-s-glb-integrationservices-api-dev/api/v1"
+
+wms:        
+  configRef: "MUnit_Database_Config"
+    
+awsSQS:
+  createItem:
+    arn: "arn:aws:sqs:eu-west-2:860956655246:dev_wn_warehousing_mh2020_item_create_mule"
+    queueURL: "https://sqs:eu-west-2.amazonaws.com/860956655246/dev_wn_warehousing_mh2020_item_create_mule"
+    dlqArn: "arn:aws:sqs:eu-west-2:860956655246:dev_wn_warehousing_mh2020_item_create_dlq_mule"
+    dlqQueueURL: "https://sqs:eu-west-2.amazonaws.com/860956655246/dev_wn_warehousing_mh2020_item_create_dlq_mule"    
+  updateItem:
+    arn: "arn:aws:sqs:eu-west-2:860956655246:dev_wn_warehousing_mh2020_item_update_mule"
+    queueURL: "https://sqs:eu-west-2.amazonaws.com/860956655246/dev_wn_warehousing_mh2020_item_update_mule"
+    dlqArn: "arn:aws:sqs:eu-west-2:860956655246:dev_wn_warehousing_mh2020_item_update_dlq_mule"
+    dlqQueueURL: "https://sqs:eu-west-2.amazonaws.com/860956655246/dev_wn_warehousing_mh2020_item_update_dlq_mule" 
+  deleteItem:
+    arn: "arn:aws:sqs:eu-west-2:860956655246:dev_wn_warehousing_mh2020_item_delete_mule"
+    queueURL: "https://sqs:eu-west-2.amazonaws.com/860956655246/dev_wn_warehousing_mh2020_item_delete_mule"
+    dlqArn: "arn:aws:sqs:eu-west-2:860956655246:dev_wn_warehousing_mh2020_item_delete_dlq_mule"
+    dlqQueueURL: "https://sqs:eu-west-2.amazonaws.com/860956655246/dev_wn_warehousing_mh2020_item_delete_dlq_mule" 
+    
+awsSNS:
+    globalErrorTopicArn: "arn:aws:sns:eu-west-2:860956655246:dev-wn-warehousing-global-error"    

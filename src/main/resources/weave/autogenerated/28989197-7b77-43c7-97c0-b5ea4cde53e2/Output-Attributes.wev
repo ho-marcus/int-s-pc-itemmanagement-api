@@ -1,0 +1,27 @@
+%dw 2.0
+
+type auto_28989197_7b77_43c7_97c0_b5ea4cde53e2_Output_Attributes = {|
+  clientCertificate?: {|
+    publicKey?: {|  |}, 
+    "type"?: String, 
+    encoded?: Binary
+  |}, 
+  headers: {|
+    "X-TRANSACTION-ID"?: String, 
+    "X-CORRELATION-ID"?: String, 
+    clientCode: String
+  |}, 
+  listenerPath: String, 
+  method: String, 
+  queryParams: {|  |}, 
+  queryString: String, 
+  relativePath: String, 
+  remoteAddress: String, 
+  requestPath: String, 
+  requestUri: String, 
+  scheme: String, 
+  uriParams: {| itemCode: String |}, 
+  version: String, 
+  localAddress: String
+|}
+

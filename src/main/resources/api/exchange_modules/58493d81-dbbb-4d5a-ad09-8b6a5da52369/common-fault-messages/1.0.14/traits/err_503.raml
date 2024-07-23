@@ -1,0 +1,8 @@
+#%RAML 1.0 Trait
+    responses:
+      503:
+        description: This status code and error message will be returned in case if the server is currently unable to handle the request due to a temporary outage
+        body:
+          application/json:
+            type: !include ../definitions/commonFaultMessages.raml
+            example: !include ../examples/503.json

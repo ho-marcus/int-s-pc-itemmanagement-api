@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wincantonStandardWMSItemRequest xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <wincantonStandardWMSItem>
+        <itemCode>itemCode0</itemCode>
+        <status>Active</status>
+        <descriptions>
+            <longDescription>longDescription0</longDescription>
+            <itemDescription>itemDescription0</itemDescription>
+        </descriptions>
+        <baseStorageUnitofMeasure>Unit</baseStorageUnitofMeasure>
+        <orderingUnitofMeasure>Unit</orderingUnitofMeasure>
+        <color>colo</color>
+        <sizeDescription>sizeDescription</sizeDescription>
+        <barcode>barcode0</barcode>
+        <dimensions>
+            <itemDimensionSet>
+                <handlingUnitType>Case</handlingUnitType>
+                <sizeDimensions>
+                    <length>2311040.52</length>
+                    <width>017421.26</width>
+                    <height>23025528.72</height>
+                    <uom>Centimetre</uom>
+                </sizeDimensions>
+                <weightDimensions>
+                    <weight>3269.48162979</weight>
+                    <uom>KGS</uom>
+                </weightDimensions>
+                <volumeDimensions>
+                    <volume>31.3079</volume>
+                    <uom>Millilitres</uom>
+                </volumeDimensions>
+            </itemDimensionSet>
+        </dimensions>
+        <handlingUnits>
+            <handlingUnit>
+                <handlingUnitType>Case</handlingUnitType>
+                <unitQuantity>50</unitQuantity>
+                <GTIN>GTIN0</GTIN>
+            </handlingUnit>
+        </handlingUnits>
+        <shelfLife>
+            <shelfLifeIndicator>1</shelfLifeIndicator>
+            <shelfLifeDays>13457</shelfLifeDays>
+        </shelfLife>
+        <referenceFields>
+            <referenceStrings>
+                <referenceFieldString>referenceFieldString0</referenceFieldString>
+                <referenceFieldString>referenceFieldString1</referenceFieldString>
+            </referenceStrings>
+            <referenceNumbers>
+                <referenceFieldNumber>0.00000</referenceFieldNumber>
+                <referenceFieldNumber>0.00000</referenceFieldNumber>
+            </referenceNumbers>
+        </referenceFields>
+        <supplierCrossReferenceInformation>
+            <supplierBarcode>supplierBarcode0</supplierBarcode>
+            <supplierQuantity>50</supplierQuantity>
+            <itemBarcode>itemBarcode0</itemBarcode>
+        </supplierCrossReferenceInformation>
+        <attributes>
+            <standardBundleQuantity>500000000</standardBundleQuantity>
+            <productType>pro</productType>
+            <subGroup>sub</subGroup>
+            <salesGroup>salesG</salesGroup>
+            <ECCNNumber>ECCNNu</ECCNNumber>
+            <expiryDateRequired>Prompt if Null</expiryDateRequired>
+            <itemAttributesRequired>Allow User Override</itemAttributesRequired>
+            <lotRequired>Not Required</lotRequired>
+            <productStatusRequired>Accept If Not Present</productStatusRequired>
+            <countryOfOriginRequired>Not Required</countryOfOriginRequired>
+            <serialNumberTrackingRequired>Not Required</serialNumberTrackingRequired>
+        </attributes>
+    </wincantonStandardWMSItem>
+    <internalActionFields>
+        <actionID>actionID0</actionID>
+        <actionDateTime>2006-05-04T18:13:51.0</actionDateTime>
+    </internalActionFields>
+</wincantonStandardWMSItemRequest>

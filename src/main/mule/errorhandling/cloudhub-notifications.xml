@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns:cloudhub="http://www.mulesoft.org/schema/mule/cloudhub"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/cloudhub http://www.mulesoft.org/schema/mule/cloudhub/current/mule-cloudhub.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd">
+	<sub-flow name="create-cloudhub-error-notification" doc:id="5e1dc472-8769-4b62-ab11-584849bdc86a" >
+		<choice doc:name="notify-ops?" doc:id="37d6c991-bac6-4035-9338-e187071978e4">
+			<when expression="#[p('notifyOps') == &quot;true&quot;]">
+				<ee:transform doc:name="set-error-payload" doc:id="c759ff7f-1165-4f30-b3b9-afbab444439b">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+{
+	process: vars.mode,
+	correlationId: correlationId,
+	errorMessage: if(error.errorMessage.payload.errors[0].title != null)(error.errorMessage.payload.errors[0].title)else(vars.errorMessage),
+	errorDescription: error.description,
+	errorType: if(error.errorType.identifier == "RETRY_EXHAUSTED")(error.suppressedErrors.errorType.identifier[0])else(error.errorType.identifier),
+	businessUnit: "WMS",
+}
+
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<json-logger:logger doc:name="debug-logger-cloudhub-notification-payload" doc:id="44b55f6c-f850-41fd-9a7d-92764dd7af67" config-ref="JSON_Logger_Config" message="Cloudhub Notification Payload" priority="DEBUG" category="support"/>
+				<async doc:name="Async" doc:id="ce4fc39a-45ba-4af6-9282-81b7eb8478aa">
+					<cloudhub:create-notification domain="#[p('api.domain')]" doc:name="create-cloudhub-notification" doc:id="1136e4c8-2782-46f9-a347-c99f32a8b090" priority="ERROR" transactionId="#[vars.correlationId default correlationId]" config-ref="CloudHub_Config-error_notification">
+					<cloudhub:message><![CDATA[#[output text/plain
+---
+
+write(payload,"application/json")]]]></cloudhub:message>
+				</cloudhub:create-notification>
+				</async>
+				<json-logger:logger doc:name="cloudhub-notification-success" doc:id="606041d4-ebf5-4376-bec8-9e2ef1f78486" config-ref="JSON_Logger_Config" message="Cloudhub Notification sent successfully"/>
+			</when>
+		</choice>
+	</sub-flow>
+</mule>

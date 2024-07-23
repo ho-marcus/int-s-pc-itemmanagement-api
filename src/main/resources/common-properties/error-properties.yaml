@@ -1,0 +1,88 @@
+errors:
+  override:
+    technical: "false"
+    business: "false"
+    http: "false"
+    file: "false"
+    jms: "false"
+    wsc: "false"
+    apikit: "false"
+    db: "false"
+    restvalidator: "false"
+    response: "false"
+    default: "false"
+    sftp: "false"
+    sqs: "false"
+  extend:
+    technical: "false"
+    business: "false"
+    http: "false"
+    file: "false"
+    jms: "false"
+    wsc: "false"
+    apikit: "false"
+    db: "false"
+    restvalidator: "false"
+    default: "false"
+    sftp: "false"
+    sqs: "false"
+  response:
+    mule:
+      EXPRESSION: "{\"errorMessage\": \"A Mule Expression Error has occurred\",\"httpStatus\" : \"500\"}"
+      UNKNOWN: "{\"errorMessage\": \"A Mule Unknown Error has occurred\",\"httpStatus\" : \"500\"}"
+      RETRY_EXHAUSTED : "{\"errorMessage\": \"Retry exhausted, An error has occured\",\"httpStatus\" : \"500\"}"
+      DEFAULT: "{\"errorMessage\": \"An Mule error has occured\",\"httpStatus\" : \"500\"}"
+    sqs: 
+      CONNECTIVITY: "{\"errorMessage\": \"An SQS Connection error has occured\",\"httpStatus\" : \"500\"}"
+      DEFAULT: "{\"errorMessage\": \"An SQS error has occured\",\"httpStatus\" : \"500\"}"
+    sftp: 
+      CONNECTIVITY: "{\"errorMessage\": \"An SFTP Connection error has occured\",\"httpStatus\" : \"500\"}"
+      DEFAULT: "{\"errorMessage\": \"An SFTP error has occured\",\"httpStatus\" : \"500\"}"
+      CANNOT_REACH: "{\"errorMessage\": \"Could not establish SFTP connection with host\",\"httpStatus\" : \"500\"}"
+    business:
+      INVALID_INPUT_DATA: "{\"errorMessage\": \"Input data is invalid\",\"httpStatus\" : \"400\"}"
+      INVALID_RESPONSE: "{\"errorMessage\": \"Response from target system is invalid\",\"httpStatus\" : \"404\"}"
+      INVALID_PACK_NAME: "{\"errorMessage\": \"Response from target system is invalid\",\"httpStatus\" : \"404\"}"
+      DEFAULT: "{\"errorMessage\": \"An error has occured\",\"httpStatus\" : \"500\"}"
+      SERVER_ERROR: "{\"errorMessage\": \"An error has occured\",\"httpStatus\" : \"500\"}"
+      NOT_FOUND: "{\"errorMessage\": \"A Bad Request Error has occurred\",\"httpStatus\" : \"400\"}" 
+    apikit:
+      BAD_REQUEST: "{\"errorMessage\": \"A Bad Request Error has occurred\",\"httpStatus\" : \"400\"}"
+      NOT_FOUND: "{\"errorMessage\": \"Resource not found\",\"httpStatus\" : \"404\"}"
+      METHOD_NOT_ALLOWED: "{\"errorMessage\": \"Method not allowed\",\"httpStatus\" : \"405\"}"
+      NOT_ACCEPTABLE: "{\"errorMessage\": \"Not acceptable\",\"httpStatus\" : \"406\"}"
+      UNSUPPORTED_MEDIA_TYPE: "{\"errorMessage\": \"Unsupported media type\",\"httpStatus\" : \"415\"}"
+      NOT_IMPLEMENTED: "{\"errorMessage\": \"Not Implemented\",\"httpStatus\" : \"501\"}"    
+      DEFAULT: "{\"errorMessage\": \"An error has occured\",\"httpStatus\" : \"500\"}"
+    http:
+      INVALID_CLIENT_ID: "{\"errorMessage\": \"Invalid Client ID\",\"httpStatus\" : \"400\"}"   
+      BAD_REQUEST: "{\"errorMessage\": \"A Bad Request Error has occurred\",\"httpStatus\" : \"400\"}"
+      NOT_FOUND: "{\"errorMessage\": \"Method not found\",\"httpStatus\" : \"404\"}"      
+      EXPRESSION: "{\"errorMessage\": \"A Mule Expression Error has occurred\",\"httpStatus\" : \"500\"}"      
+      ROUTING: "{\"errorMessage\": \"A Routing error has occurred\",\"httpStatus\" : \"400\"}"      
+      UNAUTHORIZED: "{\"errorMessage\": \"Unauthorized request\",\"httpStatus\" : \"401\"}"      
+      CONNECTIVITY: "{\"errorMessage\": \"A Connection Error has occurred\",\"httpStatus\" : \"504\"}"
+      FORBIDDEN: "{\"errorMessage\": \"Not authorized\",\"httpStatus\" : \"403\"}"          
+      METHOD_NOT_ALLOWED: "{\"errorMessage\": \"Method is not allowed\",\"httpStatus\" : \"405\"}"      
+      NOT_ACCEPTABLE: "{\"errorMessage\": \"Not acceptable\",\"httpStatus\" : \"406\"}"             
+      DEFAULT: "{\"errorMessage\": \"An error has occured\",\"httpStatus\" : \"500\"}"
+    restvalidator:
+      BAD_REQUEST: "{\"errorMessage\": \"A Bad Request Error has occurred\",\"httpStatus\" : \"400\"}"
+      METHOD_NOT_ALLOWED: "{\"errorMessage\": \"Method not allowed\",\"httpStatus\" : \"405\"}"
+      RESOURCE_NOT_FOUND: "{\"errorMessage\": \"Resource not found\",\"httpStatus\" : \"404\"}"
+      DEFAULT: "{\"errorMessage\": \"An error has occured\",\"httpStatus\" : \"500\"}"
+    db:
+      DEFAULT: "{\"errorMessage\": \"An error has occured\",\"httpStatus\" : \"500\"}"
+      SERVER_ERROR: "{\"errorMessage\": \"Service-side Error\",\"httpStatus\" : \"500\"}"
+      NOT_FOUND: "{\"errorMessage\": \"No Records Found\",\"httpStatus\" : \"404\"}"
+      CONNECTIVITY: "{\"errorMessage\": \"A Database Connection Error has occurred\",\"httpStatus\" : \"500\"}"
+    wsc:
+      DEFAULT: "{\"errorMessage\": \"An error has occured\",\"httpStatus\" : \"500\"}"
+    jms:
+      DEFAULT: "{\"errorMessage\": \"An error has occured\",\"httpStatus\" : \"500\"}"
+    technical:
+      DEFAULT: "{\"errorMessage\": \"An error has occured\",\"httpStatus\" : \"500\"}"
+    file:
+      DEFAULT: "{\"errorMessage\": \"An error has occured\",\"httpStatus\" : \"500\"}"
+    default:
+      DEFAULT: "{\"errorMessage\": \"An error has occured\",\"httpStatus\" : \"500\"}"

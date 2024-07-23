@@ -1,0 +1,8 @@
+#%RAML 1.0 Trait
+    responses:
+      404:
+        description: This status code and error message will be returned in case if the API encounters any errors like Resource not found.
+        body:
+          application/json:
+            type: !include ../definitions/commonFaultMessages.raml
+            example: !include ../examples/404.json

@@ -1,0 +1,737 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="sqs-queue-receivers-test-suite.xml" />
+
+<munit:test name="async-create-item-test-suite" doc:id="b9a4b1b5-0a50-415f-9451-80286149105a" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="receive-create-item-messages" doc:id="662dd72d-9698-4165-a0d4-bc372ed585fe" processor="sqs:receivemessages">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="receive-create-item-messages" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="ce83c38e-a16c-4e9d-994e-24ab07bdd4f0" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_create" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="true" attributeName="preserveMessages" />
+					<munit-tools:with-attribute whereValue="${awsSQS.createItem.queueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="create-item-flow-ref" doc:id="19622106-e08c-4e46-9a03-17a473518e77" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="create-item" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="fe5d8f73-b861-454f-852b-8da8857478d9" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="create-item" attributeName="name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="delete-create-item-queue-message" doc:id="1709e941-52cd-44a7-89e4-a38537272a15" processor="sqs:delete-message">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="delete-create-item-queue-message" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="75551e4a-6475-4bf1-af9a-596e158aef8a" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_create" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${awsSQS.createItem.queueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<set-payload value='#[MunitTools::getResourceAsString("item_queue_message.txt")]' doc:name="test-message" doc:id="41ec8225-c61f-418a-9964-1e864f3848e3" />
+			<flow-ref doc:name="async-create-item-flow-ref" doc:id="df54e17f-f2d6-442a-a5b8-3a05de969177" name="async-create-item"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-equals doc:name="validate-order-id" doc:id="61597b8b-e366-4e14-b58a-496ae326e737" actual="#[output application/java&#10; --- &#10;payload.^mediaType]" expected='#["application/xml; charset=UTF-8"]'/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="async-item-retry-on-error-propagate-test-suite" doc:id="ed4ce212-e1af-4a87-8f7c-3f42df83c5db" description="Test" expectedErrorType="MULE:RETRY_EXHAUSTED">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="receive-create-item-messages" doc:id="b3008ce0-ef35-4642-857f-b12ab86c30d1" processor="sqs:receivemessages">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="receive-create-item-messages" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="ce83c38e-a16c-4e9d-994e-24ab07bdd4f0" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_create" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="true" attributeName="preserveMessages" />
+					<munit-tools:with-attribute whereValue="${awsSQS.createItem.queueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="SQS:CONNECTIVITY" />
+				</munit-tools:then-return>
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when write-to-manhattan-sftp" doc:id="684ba93f-743b-4c87-8b2e-8ca302fd08a3" processor="sftp:write">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="write-to-manhattan-sftp" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="MH_SFTP-config" attributeName="config-ref" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="SFTP:RETRY_EXHAUSTED" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="send-message-to-item-create-dlq" doc:id="adf1e00f-f725-4c89-a15d-112cd8221247" processor="sqs:send-message">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="send-message-to-item-create-dlq" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="3639245e-0439-4f59-9858-b06cd5a2d66d" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_create_DLQ" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${awsSQS.createItem.dlqQueueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="delete-create-item-queue-message" doc:id="c75e2dcd-62a4-434e-9e89-3c2828780069" processor="sqs:delete-message">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="delete-create-item-queue-message" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="b7d13807-4be1-4c88-a454-66c2567373b0" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_create" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${awsSQS.createItem.queueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="publish-to-global-error-topic-flow-ref" doc:id="647a6670-06fd-46a6-94a6-c19d5eb70eaf" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="error-handler-push-to-global-error-topic" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="53094fa3-de0f-428f-b2ea-1367466b8844" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="error-handler-push-to-global-error-topic" attributeName="name" />
+					<munit-tools:with-attribute whereValue="topicResponse" attributeName="target" />
+				</munit-tools:with-attributes>
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="create-cloudhub-notification-flow-ref" doc:id="e3ddaad5-c17b-49d6-bd57-94c2857fda4a" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="create-cloudhub-error-notification" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="c6f889ad-b03c-494a-82d5-4f5863b77186" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="create-cloudhub-error-notification" attributeName="name" />
+					<munit-tools:with-attribute whereValue="alertResponse" attributeName="target" />
+				</munit-tools:with-attributes>
+
+			</munit-tools:mock-when>
+		
+</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="approximate-receive-count" doc:id="f6a004b5-b488-4baa-bc16-3f2248a81e7c" >
+				<munit:attributes value='#[{"ApproximateReceiveCount": 6}]' encoding="UTF-8" mediaType="application/java" />
+			</munit:set-event>
+			<set-payload value='#[MunitTools::getResourceAsString("item_queue_message.txt")]' doc:name="test-message" doc:id="403b0e83-5527-4136-af97-6cdf2e3583e4" />
+			<flow-ref doc:name="async-create-item-flow-ref" doc:id="d63af924-82f9-4da0-9c26-68dfbeabfc72" name="async-create-item"/>
+		</munit:execution>
+	</munit:test>
+	<munit:test name="async-create-retry-on-continue-test-suite" doc:id="ee0ea73c-7082-44a4-844f-8af1814ced4e" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="receive-create-item-messages" doc:id="242819aa-aa5f-47df-978e-102c1f1a6a5e" processor="sqs:receivemessages">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="receive-create-item-messages" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="ce83c38e-a16c-4e9d-994e-24ab07bdd4f0" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_create" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="true" attributeName="preserveMessages" />
+					<munit-tools:with-attribute whereValue="${awsSQS.createItem.queueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="create-item-flow-ref" doc:id="bfb1195d-0a29-4a64-8d70-15ea3de098ce" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="create-item" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="fe5d8f73-b861-454f-852b-8da8857478d9" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="create-item" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="HTTP:BAD_REQUEST" />
+					<munit-tools:variables >
+						<munit-tools:variable key="retryCount" value="#[6]" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			
+
+</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="delete-create-item-queue-message" doc:id="e1a4e679-04e5-452b-9cdd-abb96a44394d" processor="sqs:delete-message">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="delete-create-item-queue-message" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="0a38d12d-179a-490e-980b-aa9cf1a0babd" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_create" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${awsSQS.createItem.queueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="error-handler-push-to-global-error-topic-flow-ref" doc:id="8529bc46-cab5-4116-94e2-a6869e7cd81c" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="error-handler-push-to-global-error-topic" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="cb353fc5-7658-4b49-898b-bed8a327fd01" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="error-handler-push-to-global-error-topic" attributeName="name" />
+					<munit-tools:with-attribute whereValue="topicResponse" attributeName="target" />
+				</munit-tools:with-attributes>
+
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="create-cloudhub-notification-flow-ref" doc:id="4715bb4b-97a1-435f-9562-7e30abd00aec" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="create-cloudhub-error-notification" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="3f26c5de-57c4-4339-8c4d-4ff26f55c86b" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="create-cloudhub-error-notification" attributeName="name" />
+					<munit-tools:with-attribute whereValue="alertResponse" attributeName="target" />
+				</munit-tools:with-attributes>
+
+
+			</munit-tools:mock-when>
+		
+</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="approximate-receive-count" doc:id="69f407bf-7608-41f9-bf43-2bb75faf4d91" >
+				<munit:attributes value='#[{"ApproximateReceiveCount": 6}]' encoding="UTF-8" mediaType="application/java" />
+			</munit:set-event>
+			<set-payload value='#[MunitTools::getResourceAsString("item_queue_message.txt")]' doc:name="test-message" doc:id="d01ebc9a-f76e-4ea7-a960-37fc473256f3" />
+			<flow-ref doc:name="async-create-item-flow-ref" doc:id="61345a65-caec-4eea-9159-2c28751945d3" name="async-create-item"/>
+		</munit:execution>
+	</munit:test>
+<munit:test name="async-create-order-error-test-suite" doc:id="bfd3465b-7222-47ff-8d29-28df6a7501d6" description="Test" expectedErrorType="HTTP:BAD_GATEWAY">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="receive-create-item-messages" doc:id="9bd1e8b2-8d13-43ad-aeb5-22ddf6820296" processor="sqs:receivemessages">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="receive-create-item-messages" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="ce83c38e-a16c-4e9d-994e-24ab07bdd4f0" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_create" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="true" attributeName="preserveMessages" />
+					<munit-tools:with-attribute whereValue="${awsSQS.createItem.queueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="create-item-flow-ref" doc:id="53dc0f42-cfc1-438e-abc2-8274b28b04d1" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="create-item" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="fe5d8f73-b861-454f-852b-8da8857478d9" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="create-item" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="HTTP:BAD_GATEWAY" />
+					<munit-tools:variables >
+						<munit-tools:variable key="retryCount" value="#[1]" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			
+
+</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="sns-error-topic" doc:id="1d9c0f82-0a49-47e7-a830-9cb9cd5a3936" processor="sns:publish">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="publish-to-global-error-topic" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="b83c166f-443a-4ae7-9c00-71f7e7ae084f" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SNS_configuration-global_error_topic" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${awsSNS.globalErrorTopicArn}" attributeName="topicArn" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="cloudhub-notification" doc:id="9c396f6f-da2c-4209-97ac-1b9ef6d83cf9" processor="cloudhub:create-notification">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="create-cloudhub-notification" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="1136e4c8-2782-46f9-a347-c99f32a8b090" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="ERROR" attributeName="priority" />
+					<munit-tools:with-attribute whereValue="CloudHub_Config-error_notification" attributeName="config-ref" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		
+</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="approximate-receive-count" doc:id="a91adc79-4ecd-463e-b697-1092dec2140c" >
+				<munit:attributes value='#[{"ApproximateReceiveCount": 1}]' encoding="UTF-8" mediaType="application/java" />
+
+			</munit:set-event>
+			<set-payload value='#[MunitTools::getResourceAsString("item_queue_message.txt")]' doc:name="test-message" doc:id="2835420c-1c24-496b-86c4-c06634e96c0a" />
+			<flow-ref doc:name="async-create-item-flow-ref" doc:id="f3f1aa07-67f5-4560-bd4f-8b46fe54a3f1" name="async-create-item"/>
+		</munit:execution>
+	</munit:test>
+<munit:test name="async-update-order-test-suite" doc:id="c6e563eb-2681-4d60-8ba6-fb5b3ca02de9" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="receive-update-item-messages" doc:id="8d15abc9-6228-4ff9-8283-6295db987ed5" processor="sqs:receivemessages">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="receive-update-item-messages" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="65ceecea-4390-480a-9c6f-c4ad2d80f417" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_update" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="true" attributeName="preserveMessages" />
+					<munit-tools:with-attribute whereValue="${awsSQS.updateItem.queueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="update-item-flow-ref" doc:id="f59c7ec1-33ab-4165-93c0-a8f483f41cbf" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="update-item" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="caf0203b-ae92-4d23-87a1-4a3a1d09624e" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="update-item" attributeName="name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="delete-message" doc:id="9fce4f31-7ce6-4f04-ae63-a07c03cf6170" processor="sqs:delete-message">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="delete-update-item-queue-message" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="9171a6d5-57b9-4580-b35e-f1d67a3c9672" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_update" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${awsSQS.updateItem.queueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<set-payload value='#[MunitTools::getResourceAsString("item_queue_message.txt")]' doc:name="test-message" doc:id="5ca1f6c9-0b10-4fed-b513-e9519435cafb" />
+			<flow-ref doc:name="async-update-item-flow-ref" doc:id="0ced5a6f-94fd-4731-a889-95784ada169b" name="async-update-item"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-equals doc:name="validate-media-type" doc:id="50509fae-2792-4eec-af85-7e1c5ef2d7d8" actual="#[output application/java&#10; --- &#10;payload.^mediaType]" expected='#["application/xml; charset=UTF-8"]'/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="async-update-retry-on-error-propagate-test-suite" doc:id="44d53f3d-6a0b-4455-b8d0-ce1972a4c19a" description="Test" expectedErrorType="HTTP:BAD_GATEWAY">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="receive-update-item-messages" doc:id="86fd6165-58c3-41a6-97a5-ae303ac94b59" processor="sqs:receivemessages">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="receive-update-item-messages" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="65ceecea-4390-480a-9c6f-c4ad2d80f417" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_update" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="true" attributeName="preserveMessages" />
+					<munit-tools:with-attribute whereValue="${awsSQS.updateItem.queueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="update-item-flow-ref" doc:id="92fc5064-cd2d-4eb9-b651-1e49e9e259fc" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="update-item" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="caf0203b-ae92-4d23-87a1-4a3a1d09624e" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="update-item" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="HTTP:BAD_GATEWAY" />
+					<munit-tools:variables >
+						<munit-tools:variable key="retryCount" value="#[6]" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			
+</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="send-to-dlq" doc:id="a5e2fffe-7fc0-4e7f-b555-dee2af0dab08" processor="sqs:send-message">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="send-message-to-item-update-dlq" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="93ea6cb4-9b1c-440c-80fb-8c4042bd8536" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_update_DLQ" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${awsSQS.updateItem.dlqQueueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="delete-message-in-retry" doc:id="12871c39-83a1-43e2-8e76-901365205654" processor="sqs:delete-message">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="delete-update-item-queue-message" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="f698ef32-8702-41fb-8153-13d797779645" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_update" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${awsSQS.updateItem.queueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="sns-error-topic" doc:id="54e83d7a-6680-4c6e-ae07-112d53c8575a" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="error-handler-push-to-global-error-topic" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="610138c9-c55f-4830-84b6-abc1c9bbce8f" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="error-handler-push-to-global-error-topic" attributeName="name" />
+					<munit-tools:with-attribute whereValue="topicResponse" attributeName="target" />
+				</munit-tools:with-attributes>
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="cloudhub-notification" doc:id="22a209c9-56fe-482f-bf6a-18ec597389ac" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="create-cloudhub-error-notification" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="eca37e23-57bc-4c96-a85f-e39b1437749d" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="create-cloudhub-error-notification" attributeName="name" />
+					<munit-tools:with-attribute whereValue="alertResponse" attributeName="target" />
+				</munit-tools:with-attributes>
+
+			</munit-tools:mock-when>
+		
+</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="approximate-receive-count" doc:id="1421d68d-d8f9-48c5-8478-322d97b3e227" >
+				<munit:attributes value='#[{"ApproximateReceiveCount": 6}]' encoding="UTF-8" mediaType="application/java" />
+			</munit:set-event>
+			<set-payload value='#[MunitTools::getResourceAsString("item_queue_message.txt")]' doc:name="test-message" doc:id="2042b623-f492-497b-83cf-2c283fe7a7e1" />
+			<flow-ref doc:name="async-update-item-flow-ref" doc:id="b41ce634-53e0-4f8c-b40d-f7fded16d632" name="async-update-item" />
+		
+</munit:execution>
+	</munit:test>
+	<munit:test name="async-update-retry-on-continue-test-suite" doc:id="4107c1b2-ba62-4c49-883b-05801f52a18c" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="receive-update-item-messages" doc:id="cc3daf7a-420e-4096-9928-5c45cb5130e7" processor="sqs:receivemessages">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="receive-update-item-messages" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="65ceecea-4390-480a-9c6f-c4ad2d80f417" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_update" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="true" attributeName="preserveMessages" />
+					<munit-tools:with-attribute whereValue="${awsSQS.updateItem.queueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="update-item-flow-ref" doc:id="cb8d51eb-ef29-4e46-aabe-8ec085188c0d" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="update-item" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="caf0203b-ae92-4d23-87a1-4a3a1d09624e" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="update-item" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="HTTP:BAD_REQUEST" />
+					<munit-tools:variables >
+						<munit-tools:variable key="retryCount" value="#[6]" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			
+
+</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="delete-message-in-retry" doc:id="248391bf-9e25-4ad2-b7f1-4e9236889d9a" processor="sqs:delete-message">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="delete-update-item-queue-message" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="5736e145-fdd0-4937-ae39-2636dd8dbbd8" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_update" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${awsSQS.updateItem.queueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="sns-error-topic" doc:id="73ecf847-0ede-4e50-8a7c-ca7352474997" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="error-handler-push-to-global-error-topic" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="9f571a73-9a17-4704-a314-9d610a0a22e2" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="error-handler-push-to-global-error-topic" attributeName="name" />
+					<munit-tools:with-attribute whereValue="topicResponse" attributeName="target" />
+				</munit-tools:with-attributes>
+
+
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="cloudhub-notification" doc:id="c0fcaa2a-0004-4b59-80e7-b958a3c866c0" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="create-cloudhub-error-notification" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="803fac67-6a92-4cee-a637-ad906d19369c" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="create-cloudhub-error-notification" attributeName="name" />
+					<munit-tools:with-attribute whereValue="alertResponse" attributeName="target" />
+				</munit-tools:with-attributes>
+
+
+
+			</munit-tools:mock-when>
+		
+</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="approximate-receive-count" doc:id="15a79b39-5e5b-47b0-92bb-fb84f1907225" >
+				<munit:attributes value='#[{"ApproximateReceiveCount": 6}]' encoding="UTF-8" mediaType="application/java" />
+			</munit:set-event>
+			<set-payload value='#[MunitTools::getResourceAsString("item_queue_message.txt")]' doc:name="test-message" doc:id="8f1f59af-6764-4630-a594-d6f63867bbde" />
+			<flow-ref doc:name="async-update-item-flow-ref" doc:id="33184565-634b-46d4-946c-4f272784d68f" name="async-update-item"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-equals doc:name="validate-media-type" doc:id="bcaff5be-f5f4-4308-8336-1ddc18fa9d45" actual="#[output application/java&#10; --- &#10;payload.^mediaType]" expected='#["application/xml; charset=UTF-8"]'/>
+		</munit:validation>
+	
+</munit:test>
+<munit:test name="async-update-item-retry-on-error-propagate-default-test-suite" doc:id="3bf01c6c-8119-46e9-b1b0-2d879effdb96" description="Test" expectedErrorType="HTTP:BAD_GATEWAY">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="receive-item-order-messages" doc:id="fa040996-157d-47aa-8a2f-50158564428b" processor="sqs:receivemessages">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="receive-update-item-messages" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="65ceecea-4390-480a-9c6f-c4ad2d80f417" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_update" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="true" attributeName="preserveMessages" />
+					<munit-tools:with-attribute whereValue="${awsSQS.updateItem.queueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="update-item" doc:id="d4ee6009-2b6c-4577-a19d-1971b114c39b" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="update-item" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="caf0203b-ae92-4d23-87a1-4a3a1d09624e" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="update-item" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="HTTP:BAD_GATEWAY" />
+					<munit-tools:variables >
+						<munit-tools:variable key="retryCount" value="#[1]" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			
+
+</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="sns-error-topic" doc:id="abc035ea-95e2-4b1d-ba50-c1a6b1c847f3" processor="sns:publish">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="publish-to-global-error-topic" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="b83c166f-443a-4ae7-9c00-71f7e7ae084f" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SNS_configuration-global_error_topic" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${awsSNS.globalErrorTopicArn}" attributeName="topicArn" />
+				</munit-tools:with-attributes>
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="cloudhub-notification" doc:id="d5c65fe4-a95d-4811-891e-dbe9fe97c4c0" processor="cloudhub:create-notification">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="create-cloudhub-notification" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="1136e4c8-2782-46f9-a347-c99f32a8b090" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="ERROR" attributeName="priority" />
+					<munit-tools:with-attribute whereValue="CloudHub_Config-error_notification" attributeName="config-ref" />
+				</munit-tools:with-attributes>
+
+			</munit-tools:mock-when>
+		
+</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="approximate-receive-count" doc:id="f6200842-c7ea-4eb2-81bc-12fbcfcff0b7" >
+				<munit:attributes value='#[{"ApproximateReceiveCount": 1}]' encoding="UTF-8" mediaType="application/java" />
+
+			</munit:set-event>
+			<set-payload value='#[MunitTools::getResourceAsString("item_queue_message.txt")]' doc:name="test-message" doc:id="55c42832-ec01-45b5-ba00-ba221cc99fa5" />
+			<flow-ref doc:name="async-update-item-flow-ref" doc:id="2293fe11-0be3-4672-8124-60308829dc26" name="async-update-item"/>
+		</munit:execution>
+	</munit:test>
+	<munit:test name="async-delete-order-test-suite" doc:id="7de19107-a3d8-4895-a1d4-d74f0871f481" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="receive-delete-item-messages" doc:id="0cc296a3-8c1a-4815-99cc-805bff06e8af" processor="sqs:receivemessages">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="receive-delete-item-messages" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="03b49ae3-f6f0-45e9-9bcd-3addf14ae04d" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_delete" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="true" attributeName="preserveMessages" />
+					<munit-tools:with-attribute whereValue="${awsSQS.deleteItem.queueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="delete-item-flow-ref" doc:id="1b7c64b8-8857-43a2-beb0-0d7540121e57" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="delete-item" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="405a4d48-89d3-46d7-b45c-d5505bf17562" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="delete-item" attributeName="name" />
+				</munit-tools:with-attributes>
+
+
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="delete-message" doc:id="95f7cd53-2551-4205-ab33-e1716ff953f4" processor="sqs:delete-message">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="delete-delete-item-queue-message" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="6add40f1-bef3-4a21-b905-69685e15bdc1" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_delete" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${awsSQS.deleteItem.queueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+
+
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<set-payload value='#[MunitTools::getResourceAsString("item_queue_message.txt")]' doc:name="test-message" doc:id="aa94aeb5-bbc6-4af5-ab7b-235722b9cac3" />
+			<flow-ref doc:name="async-delete-order-flow-ref" doc:id="1bf32241-09be-4a05-a9ce-867a06c65be5" name="async-delete-item"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-equals doc:name="validate-media-type" doc:id="34a4ccfd-c7fc-458f-99d3-9dbb24b526fe" actual="#[output application/java&#10; --- &#10;payload.^mediaType]" expected='#["application/xml; charset=UTF-8"]'/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="async-delete-item-retry-on-propagate-test-suite" doc:id="32a90563-c15d-4094-a700-27b6dbc7e643" description="Test" expectedErrorType="HTTP:BAD_GATEWAY">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="receive-delete-item-messages" doc:id="8e9ae73e-a423-458b-866a-30144cdd0cd3" processor="sqs:receivemessages">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="receive-delete-item-messages" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="03b49ae3-f6f0-45e9-9bcd-3addf14ae04d" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_delete" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="true" attributeName="preserveMessages" />
+					<munit-tools:with-attribute whereValue="${awsSQS.deleteItem.queueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="delete-item-flow-ref" doc:id="db6aed9f-153b-43a7-9b32-20b9dac227af" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="delete-item" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="405a4d48-89d3-46d7-b45c-d5505bf17562" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="delete-item" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="HTTP:BAD_GATEWAY" />
+					<munit-tools:variables >
+						<munit-tools:variable key="retryCount" value="#[6]" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			
+</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="send-to-dlq" doc:id="75729c41-ae0e-4489-9434-5a505ce669ca" processor="sqs:send-message">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="send-message-to-item-delete-dlq" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="edbed760-e03e-4b6b-bc40-172f6b716ea6" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_delete_DLQ" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${awsSQS.deleteItem.dlqQueueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="delete-message-in-retry" doc:id="868e42e9-b375-463e-95a1-ea0cfd768be7" processor="sqs:delete-message">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="delete-delete-item-queue-message" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="384035ca-a604-4366-a49a-1b18c450bf82" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_delete" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${awsSQS.deleteItem.queueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="sns-error-topic" doc:id="cbf78926-d48a-4a47-b312-416308c16d55" processor="sns:publish">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="publish-to-global-error-topic" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="b83c166f-443a-4ae7-9c00-71f7e7ae084f" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SNS_configuration-global_error_topic" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${awsSNS.globalErrorTopicArn}" attributeName="topicArn" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="cloudhub-notification" doc:id="5793d5df-bc4f-46f9-93f7-04d916d666ac" processor="cloudhub:create-notification">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="create-cloudhub-notification" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="1136e4c8-2782-46f9-a347-c99f32a8b090" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="ERROR" attributeName="priority" />
+					<munit-tools:with-attribute whereValue="CloudHub_Config-error_notification" attributeName="config-ref" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		
+</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="approximate-receive-count" doc:id="f3d5ed6d-b97d-4ce7-ae5d-b5bfae08e906" >
+				<munit:attributes value='#[{"ApproximateReceiveCount": 6}]' encoding="UTF-8" mediaType="application/java" />
+			</munit:set-event>
+			<set-payload value='#[MunitTools::getResourceAsString("item_queue_message.txt")]' doc:name="test-message" doc:id="4381a3e2-93d7-4e73-9e48-0079b78f5af2" />
+			<flow-ref doc:name="async-delete-item-flow-ref" doc:id="401fa5b8-f3e1-408d-9205-95116a91e850" name="async-delete-item" />
+		
+</munit:execution>
+	</munit:test>
+	<munit:test name="async-delete-item-retry-on-continue-test-suite" doc:id="3b6a014b-c75c-4ae1-8db5-14bb5cac7762" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="receive-delete-item-messages" doc:id="c160f886-13c8-4a02-8025-229a6571debf" processor="sqs:receivemessages">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="receive-delete-item-messages" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="03b49ae3-f6f0-45e9-9bcd-3addf14ae04d" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_delete" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="true" attributeName="preserveMessages" />
+					<munit-tools:with-attribute whereValue="${awsSQS.deleteItem.queueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="delete-item" doc:id="f68c62a8-4d23-404d-b2af-67eac19f4fa3" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="delete-item" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="405a4d48-89d3-46d7-b45c-d5505bf17562" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="delete-item" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="HTTP:BAD_REQUEST" />
+					<munit-tools:variables >
+						<munit-tools:variable key="retryCount" value="#[6]" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			
+
+</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="delete-message-in-retry" doc:id="288ace82-506f-43cc-92fa-ce63bef8ea73" processor="sqs:delete-message">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="delete-delete-item-queue-message" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="a2a2a864-d249-4580-8005-ab0ad462d077" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_delete" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${awsSQS.deleteItem.queueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="sns-error-topic" doc:id="0fc54780-03a6-4aee-ba7a-aa8573e3c062" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="error-handler-push-to-global-error-topic" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="1737ffae-4a37-4ef9-8fef-7fb1820b881c" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="error-handler-push-to-global-error-topic" attributeName="name" />
+					<munit-tools:with-attribute whereValue="topicResponse" attributeName="target" />
+				</munit-tools:with-attributes>
+
+
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="cloudhub-notification" doc:id="6299ba42-fbab-4077-a002-74ae9d4138f5" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="error-handler-push-to-global-error-topic" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="1737ffae-4a37-4ef9-8fef-7fb1820b881c" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="error-handler-push-to-global-error-topic" attributeName="name" />
+					<munit-tools:with-attribute whereValue="topicResponse" attributeName="target" />
+				</munit-tools:with-attributes>
+
+
+
+			</munit-tools:mock-when>
+		
+</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="approximate-receive-count" doc:id="9112d12d-4419-46f8-8823-b6238744b2e3" >
+				<munit:attributes value='#[{"ApproximateReceiveCount": 6}]' encoding="UTF-8" mediaType="application/java" />
+			</munit:set-event>
+			<set-payload value='#[MunitTools::getResourceAsString("item_queue_message.txt")]' doc:name="test-message" doc:id="0c7ee10e-6ae5-40a3-bca4-ac86f9a6127d" />
+			<flow-ref doc:name="async-delete-item-flow-ref" doc:id="32bb6d6b-97de-4fe7-adde-14590e8d83d8" name="async-delete-item"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-equals doc:name="Assert equals" doc:id="7629ee42-15c7-474f-8e26-7270bff8aee7" actual="#[output application/java&#10; --- &#10;payload.^mediaType]" expected='#["application/xml; charset=UTF-8"]'/>
+		</munit:validation>
+	
+</munit:test>
+<munit:test name="async-delete-item-retry-on-error-propagate-default-test-suite" doc:id="a3ac1042-fe98-41db-abb1-0cdc8a45aa3f" description="Test" expectedErrorType="HTTP:BAD_GATEWAY">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="receive-delete-item-messages" doc:id="8d46c2bc-9c23-4d74-9f79-ff359ccf1b26" processor="sqs:receivemessages">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="receive-delete-item-messages" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="03b49ae3-f6f0-45e9-9bcd-3addf14ae04d" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SQS_Configuration-item_delete" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="true" attributeName="preserveMessages" />
+					<munit-tools:with-attribute whereValue="${awsSQS.deleteItem.queueURL}" attributeName="queueUrl" />
+				</munit-tools:with-attributes>
+
+
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="delete-item" doc:id="8d9f7042-f132-4142-8c2d-1a54e030038e" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="delete-item" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="405a4d48-89d3-46d7-b45c-d5505bf17562" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="delete-item" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="HTTP:BAD_GATEWAY" />
+					<munit-tools:variables >
+						<munit-tools:variable key="retryCount" value="#[1]" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			
+
+</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="sns-error-topic" doc:id="ea3982f3-dc65-4cd5-823e-e08ec34b42a4" processor="sns:publish">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="publish-to-global-error-topic" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="b83c166f-443a-4ae7-9c00-71f7e7ae084f" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Amazon_SNS_configuration-global_error_topic" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${awsSNS.globalErrorTopicArn}" attributeName="topicArn" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="cloudhub-notification" doc:id="1ed4e7e7-ee26-41f6-8309-f01bbdebca44" processor="cloudhub:create-notification">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="create-cloudhub-notification" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="1136e4c8-2782-46f9-a347-c99f32a8b090" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="ERROR" attributeName="priority" />
+					<munit-tools:with-attribute whereValue="CloudHub_Config-error_notification" attributeName="config-ref" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		
+</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="approximate-receive-count" doc:id="01a27863-3f71-4c76-a5a6-0006c943eb0e" >
+				<munit:attributes value='#[{"ApproximateReceiveCount": 1}]' encoding="UTF-8" mediaType="application/java" />
+
+			</munit:set-event>
+			<set-payload value='#[MunitTools::getResourceAsString("item_queue_message.txt")]' doc:name="test-message" doc:id="094f19d2-91fb-494a-930f-aefec6916eff" />
+			<flow-ref doc:name="async-delete-item-flow-ref" doc:id="3abee9b9-be72-41f3-8831-56c4b00ce49f" name="async-delete-item"/>
+		</munit:execution>
+	</munit:test>
+</mule>

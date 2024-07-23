@@ -1,0 +1,402 @@
+{
+	"info": {
+		"_postman_id": "a76613d0-0257-4015-821d-1e0fb3edd30d",
+		"name": "SYS: Item Management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "15001139",
+		"_collection_link": "https://lively-spaceship-818959.postman.co/workspace/WMS-Wincanton~c57f9a2e-f670-4403-b44e-dca85409b240/collection/15001139-a76613d0-0257-4015-821d-1e0fb3edd30d?action=share&source=collection_link&creator=15001139"
+	},
+	"item": [
+		{
+			"name": "DEV",
+			"item": [
+				{
+					"name": "Get Item Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "client_Id",
+								"value": "55ca551e4a2f41ea982e9618c6e8c9f6",
+								"type": "text"
+							},
+							{
+								"key": "client_secret",
+								"value": "E129f9791B394EA6a41ca1c7A6B3f0F8",
+								"type": "text"
+							},
+							{
+								"key": "clientCode",
+								"value": "P01101x",
+								"type": "text"
+							}
+						],
+						"url": "https://wincanton-nonprod-dlb.lb.anypointdns.net/int-s-mh2020-itemmanagement-api-dev/api/v1/item/1250556x/status"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Item",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "client_Id",
+								"value": "55ca551e4a2f41ea982e9618c6e8c9f6",
+								"type": "text"
+							},
+							{
+								"key": "client_secret",
+								"value": "E129f9791B394EA6a41ca1c7A6B3f0F8",
+								"type": "text"
+							},
+							{
+								"key": "clientCode",
+								"value": "P01101",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/xml",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<wincantonStandardWMSItemRequest xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n    <wincantonStandardWMSItem>\r\n        <itemCode>101</itemCode>\r\n        <status>Active</status>\r\n        <descriptions>\r\n            <longDescription>longDescription0</longDescription>\r\n            <itemDescription>itemDescription0</itemDescription>\r\n        </descriptions>\r\n        <baseStorageUnitofMeasure>Unit</baseStorageUnitofMeasure>\r\n        <orderingUnitofMeasure>Unit</orderingUnitofMeasure>\r\n        <color>colo</color>\r\n        <sizeDescription>sizeDescription</sizeDescription>\r\n        <barcode>barcode0</barcode>\r\n        <dimensions>\r\n            <itemDimensionSet>\r\n                <handlingUnitType>Case</handlingUnitType>\r\n                <sizeDimensions>\r\n                    <length>2311040.52</length>\r\n                    <width>017421.26</width>\r\n                    <height>23025528.72</height>\r\n                    <uom>Centimetre</uom>\r\n                </sizeDimensions>\r\n                <weightDimensions>\r\n                    <weight>3269.4816</weight>\r\n                    <uom>KGS</uom>\r\n                </weightDimensions>\r\n                <volumeDimensions>\r\n                    <volume>31.3079</volume>\r\n                    <uom>Millilitres</uom>\r\n                </volumeDimensions>\r\n            </itemDimensionSet>\r\n        </dimensions>\r\n        <handlingUnits>\r\n            <handlingUnit>\r\n                <handlingUnitType>Case</handlingUnitType>\r\n                <unitQuantity>50</unitQuantity>\r\n                <GTIN>GTIN0</GTIN>\r\n            </handlingUnit>\r\n        </handlingUnits>\r\n        <shelfLife>\r\n            <shelfLifeIndicator>1</shelfLifeIndicator>\r\n            <shelfLifeDays>13457</shelfLifeDays>\r\n        </shelfLife>\r\n        <referenceFields>\r\n            <referenceStrings>\r\n                <referenceFieldString>referenceFieldString0</referenceFieldString>\r\n                <referenceFieldString>referenceFieldString1</referenceFieldString>\r\n            </referenceStrings>\r\n            <referenceNumbers>\r\n                <referenceFieldNumber>0.00000</referenceFieldNumber>\r\n                <referenceFieldNumber>0.00000</referenceFieldNumber>\r\n            </referenceNumbers>\r\n        </referenceFields>\r\n        <supplierCrossReferenceInformation>\r\n            <supplierBarcode>supplierBarcode0</supplierBarcode>\r\n            <supplierQuantity>50</supplierQuantity>\r\n            <itemBarcode>itemBarcode0</itemBarcode>\r\n        </supplierCrossReferenceInformation>\r\n        <attributes>\r\n            <standardBundleQuantity>500000000</standardBundleQuantity>\r\n            <productType>pro</productType>\r\n            <subGroup>sub</subGroup>\r\n            <salesGroup>salesG</salesGroup>\r\n            <ECCNNumber>ECCNNu</ECCNNumber>\r\n            <expiryDateRequired>Prompt if Null</expiryDateRequired>\r\n            <itemAttributesRequired>Allow User Override</itemAttributesRequired>\r\n            <lotRequired>Not Required</lotRequired>\r\n            <productStatusRequired>Accept If Not Present</productStatusRequired>\r\n            <countryOfOriginRequired>Not Required</countryOfOriginRequired>\r\n            <serialNumberTrackingRequired>Not Required</serialNumberTrackingRequired>\r\n        </attributes>\r\n    </wincantonStandardWMSItem>\r\n    <internalActionFields>\r\n        <actionID>actionID0</actionID>\r\n        <actionDateTime>2006-05-04T18:13:51.0</actionDateTime>\r\n    </internalActionFields>\r\n</wincantonStandardWMSItemRequest>\r\n"
+						},
+						"url": "https://wincanton-nonprod-dlb.lb.anypointdns.net/int-s-mh2020-itemmanagement-api-dev/api/v1/item"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Item",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "client_Id",
+								"value": "55ca551e4a2f41ea982e9618c6e8c9f6",
+								"type": "text"
+							},
+							{
+								"key": "client_secret",
+								"value": "E129f9791B394EA6a41ca1c7A6B3f0F8",
+								"type": "text"
+							},
+							{
+								"key": "clientCode",
+								"value": "P01101",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/xml",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<wincantonStandardWMSItemRequest xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n    <wincantonStandardWMSItem>\r\n        <itemCode>itemCode0</itemCode>\r\n        <status>Active</status>\r\n        <descriptions>\r\n            <longDescription>longDescription0</longDescription>\r\n            <itemDescription>itemDescription0</itemDescription>\r\n        </descriptions>\r\n        <baseStorageUnitofMeasure>Unit</baseStorageUnitofMeasure>\r\n        <orderingUnitofMeasure>Unit</orderingUnitofMeasure>\r\n        <color>colo</color>\r\n        <sizeDescription>sizeDescription</sizeDescription>\r\n        <barcode>barcode0</barcode>\r\n        <dimensions>\r\n            <itemDimensionSet>\r\n                <handlingUnitType>Case</handlingUnitType>\r\n                <sizeDimensions>\r\n                    <length>2311040.52</length>\r\n                    <width>017421.26</width>\r\n                    <height>23025528.72</height>\r\n                    <uom>Centimetre</uom>\r\n                </sizeDimensions>\r\n                <weightDimensions>\r\n                    <weight>3269.4816</weight>\r\n                    <uom>KGS</uom>\r\n                </weightDimensions>\r\n                <volumeDimensions>\r\n                    <volume>31.3079</volume>\r\n                    <uom>Millilitres</uom>\r\n                </volumeDimensions>\r\n            </itemDimensionSet>\r\n        </dimensions>\r\n        <handlingUnits>\r\n            <handlingUnit>\r\n                <handlingUnitType>Case</handlingUnitType>\r\n                <unitQuantity>50</unitQuantity>\r\n                <GTIN>GTIN0</GTIN>\r\n            </handlingUnit>\r\n        </handlingUnits>\r\n        <shelfLife>\r\n            <shelfLifeIndicator>1</shelfLifeIndicator>\r\n            <shelfLifeDays>13457</shelfLifeDays>\r\n        </shelfLife>\r\n        <referenceFields>\r\n            <referenceStrings>\r\n                <referenceFieldString>referenceFieldString0</referenceFieldString>\r\n                <referenceFieldString>referenceFieldString1</referenceFieldString>\r\n            </referenceStrings>\r\n            <referenceNumbers>\r\n                <referenceFieldNumber>0.00000</referenceFieldNumber>\r\n                <referenceFieldNumber>0.00000</referenceFieldNumber>\r\n            </referenceNumbers>\r\n        </referenceFields>\r\n        <supplierCrossReferenceInformation>\r\n            <supplierBarcode>supplierBarcode0</supplierBarcode>\r\n            <supplierQuantity>50</supplierQuantity>\r\n            <itemBarcode>itemBarcode0</itemBarcode>\r\n        </supplierCrossReferenceInformation>\r\n        <attributes>\r\n            <standardBundleQuantity>500000000</standardBundleQuantity>\r\n            <productType>pro</productType>\r\n            <subGroup>sub</subGroup>\r\n            <salesGroup>salesG</salesGroup>\r\n            <ECCNNumber>ECCNNu</ECCNNumber>\r\n            <expiryDateRequired>Prompt if Null</expiryDateRequired>\r\n            <itemAttributesRequired>Allow User Override</itemAttributesRequired>\r\n            <lotRequired>Not Required</lotRequired>\r\n            <productStatusRequired>Accept If Not Present</productStatusRequired>\r\n            <countryOfOriginRequired>Not Required</countryOfOriginRequired>\r\n            <serialNumberTrackingRequired>Not Required</serialNumberTrackingRequired>\r\n        </attributes>\r\n    </wincantonStandardWMSItem>\r\n    <internalActionFields>\r\n        <actionID>actionID0</actionID>\r\n        <actionDateTime>2006-05-04T18:13:51.0</actionDateTime>\r\n    </internalActionFields>\r\n</wincantonStandardWMSItemRequest>\r\n",
+							"options": {
+								"raw": {
+									"language": "xml"
+								}
+							}
+						},
+						"url": "https://wincanton-nonprod-dlb.lb.anypointdns.net/int-s-mh2020-itemmanagement-api-dev/api/v1/item/12356503"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Item",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "client_Id",
+								"value": "55ca551e4a2f41ea982e9618c6e8c9f6",
+								"type": "text"
+							},
+							{
+								"key": "client_secret",
+								"value": "E129f9791B394EA6a41ca1c7A6B3f0F8",
+								"type": "text"
+							},
+							{
+								"key": "clientCode",
+								"value": "P01101",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/xml",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<wincantonStandardWMSItemRequest xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n    <wincantonStandardWMSItem>\r\n        <itemCode>itemCode0</itemCode>\r\n        <status>Active</status>\r\n        <descriptions>\r\n            <longDescription>longDescription0</longDescription>\r\n            <itemDescription>itemDescription0</itemDescription>\r\n        </descriptions>\r\n        <baseStorageUnitofMeasure>Unit</baseStorageUnitofMeasure>\r\n        <orderingUnitofMeasure>Unit</orderingUnitofMeasure>\r\n        <color>colo</color>\r\n        <sizeDescription>sizeDescription</sizeDescription>\r\n        <barcode>barcode0</barcode>\r\n        <dimensions>\r\n            <itemDimensionSet>\r\n                <handlingUnitType>Case</handlingUnitType>\r\n                <sizeDimensions>\r\n                    <length>2311040.52</length>\r\n                    <width>017421.26</width>\r\n                    <height>23025528.72</height>\r\n                    <uom>Centimetre</uom>\r\n                </sizeDimensions>\r\n                <weightDimensions>\r\n                    <weight>3269.4816</weight>\r\n                    <uom>KGS</uom>\r\n                </weightDimensions>\r\n                <volumeDimensions>\r\n                    <volume>31.3079</volume>\r\n                    <uom>Millilitres</uom>\r\n                </volumeDimensions>\r\n            </itemDimensionSet>\r\n        </dimensions>\r\n        <handlingUnits>\r\n            <handlingUnit>\r\n                <handlingUnitType>Case</handlingUnitType>\r\n                <unitQuantity>50</unitQuantity>\r\n                <GTIN>GTIN0</GTIN>\r\n            </handlingUnit>\r\n        </handlingUnits>\r\n        <shelfLife>\r\n            <shelfLifeIndicator>1</shelfLifeIndicator>\r\n            <shelfLifeDays>13457</shelfLifeDays>\r\n        </shelfLife>\r\n        <referenceFields>\r\n            <referenceStrings>\r\n                <referenceFieldString>referenceFieldString0</referenceFieldString>\r\n                <referenceFieldString>referenceFieldString1</referenceFieldString>\r\n            </referenceStrings>\r\n            <referenceNumbers>\r\n                <referenceFieldNumber>0.00000</referenceFieldNumber>\r\n                <referenceFieldNumber>0.00000</referenceFieldNumber>\r\n            </referenceNumbers>\r\n        </referenceFields>\r\n        <supplierCrossReferenceInformation>\r\n            <supplierBarcode>supplierBarcode0</supplierBarcode>\r\n            <supplierQuantity>50</supplierQuantity>\r\n            <itemBarcode>itemBarcode0</itemBarcode>\r\n        </supplierCrossReferenceInformation>\r\n        <attributes>\r\n            <standardBundleQuantity>500000000</standardBundleQuantity>\r\n            <productType>pro</productType>\r\n            <subGroup>sub</subGroup>\r\n            <salesGroup>salesG</salesGroup>\r\n            <ECCNNumber>ECCNNu</ECCNNumber>\r\n            <expiryDateRequired>Prompt if Null</expiryDateRequired>\r\n            <itemAttributesRequired>Allow User Override</itemAttributesRequired>\r\n            <lotRequired>Not Required</lotRequired>\r\n            <productStatusRequired>Accept If Not Present</productStatusRequired>\r\n            <countryOfOriginRequired>Not Required</countryOfOriginRequired>\r\n            <serialNumberTrackingRequired>Not Required</serialNumberTrackingRequired>\r\n        </attributes>\r\n    </wincantonStandardWMSItem>\r\n    <internalActionFields>\r\n        <actionID>actionID0</actionID>\r\n        <actionDateTime>2006-05-04T18:13:51.0</actionDateTime>\r\n    </internalActionFields>\r\n</wincantonStandardWMSItemRequest>\r\n"
+						},
+						"url": "https://wincanton-nonprod-dlb.lb.anypointdns.net/int-s-mh2020-itemmanagement-api-dev/api/v1/item/12356503"
+					},
+					"response": []
+				},
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "client_Id",
+								"value": "55ca551e4a2f41ea982e9618c6e8c9f6",
+								"type": "text"
+							},
+							{
+								"key": "client_secret",
+								"value": "E129f9791B394EA6a41ca1c7A6B3f0F8",
+								"type": "text"
+							}
+						],
+						"url": "https://wincanton-nonprod-dlb.lb.anypointdns.net/int-s-mh2020-itemmanagement-api-dev/api/v1/healthCheck"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "TEST",
+			"item": [
+				{
+					"name": "Get Item Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "client_Id",
+								"value": "65135e1e404e45fba5c7f1d53984984a",
+								"type": "text"
+							},
+							{
+								"key": "client_secret",
+								"value": "B8ECcb1eCED44e52808345A6f4e1941d",
+								"type": "text"
+							},
+							{
+								"key": "clientCode",
+								"value": "P01101x",
+								"type": "text"
+							}
+						],
+						"url": "https://wincanton-nonprod-dlb.lb.anypointdns.net/int-s-mh2020-itemmanagement-api-test/api/v1/item/1250556x/status"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Item",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "client_Id",
+								"value": "65135e1e404e45fba5c7f1d53984984a",
+								"type": "text"
+							},
+							{
+								"key": "client_secret",
+								"value": "B8ECcb1eCED44e52808345A6f4e1941d",
+								"type": "text"
+							},
+							{
+								"key": "clientCode",
+								"value": "P01101",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/xml",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<wincantonStandardWMSItemRequest xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n    <wincantonStandardWMSItem>\r\n        <itemCode>101</itemCode>\r\n        <status>Active</status>\r\n        <descriptions>\r\n            <longDescription>longDescription0</longDescription>\r\n            <itemDescription>itemDescription0</itemDescription>\r\n        </descriptions>\r\n        <baseStorageUnitofMeasure>Unit</baseStorageUnitofMeasure>\r\n        <orderingUnitofMeasure>Unit</orderingUnitofMeasure>\r\n        <color>colo</color>\r\n        <sizeDescription>sizeDescription</sizeDescription>\r\n        <barcode>barcode0</barcode>\r\n        <dimensions>\r\n            <itemDimensionSet>\r\n                <handlingUnitType>Case</handlingUnitType>\r\n                <sizeDimensions>\r\n                    <length>2311040.52</length>\r\n                    <width>017421.26</width>\r\n                    <height>23025528.72</height>\r\n                    <uom>Centimetre</uom>\r\n                </sizeDimensions>\r\n                <weightDimensions>\r\n                    <weight>3269.4816</weight>\r\n                    <uom>KGS</uom>\r\n                </weightDimensions>\r\n                <volumeDimensions>\r\n                    <volume>31.3079</volume>\r\n                    <uom>Millilitres</uom>\r\n                </volumeDimensions>\r\n            </itemDimensionSet>\r\n        </dimensions>\r\n        <handlingUnits>\r\n            <handlingUnit>\r\n                <handlingUnitType>Case</handlingUnitType>\r\n                <unitQuantity>50</unitQuantity>\r\n                <GTIN>GTIN0</GTIN>\r\n            </handlingUnit>\r\n        </handlingUnits>\r\n        <shelfLife>\r\n            <shelfLifeIndicator>1</shelfLifeIndicator>\r\n            <shelfLifeDays>13457</shelfLifeDays>\r\n        </shelfLife>\r\n        <referenceFields>\r\n            <referenceStrings>\r\n                <referenceFieldString>referenceFieldString0</referenceFieldString>\r\n                <referenceFieldString>referenceFieldString1</referenceFieldString>\r\n            </referenceStrings>\r\n            <referenceNumbers>\r\n                <referenceFieldNumber>0.00000</referenceFieldNumber>\r\n                <referenceFieldNumber>0.00000</referenceFieldNumber>\r\n            </referenceNumbers>\r\n        </referenceFields>\r\n        <supplierCrossReferenceInformation>\r\n            <supplierBarcode>supplierBarcode0</supplierBarcode>\r\n            <supplierQuantity>50</supplierQuantity>\r\n            <itemBarcode>itemBarcode0</itemBarcode>\r\n        </supplierCrossReferenceInformation>\r\n        <attributes>\r\n            <standardBundleQuantity>500000000</standardBundleQuantity>\r\n            <productType>pro</productType>\r\n            <subGroup>sub</subGroup>\r\n            <salesGroup>salesG</salesGroup>\r\n            <ECCNNumber>ECCNNu</ECCNNumber>\r\n            <expiryDateRequired>Prompt if Null</expiryDateRequired>\r\n            <itemAttributesRequired>Allow User Override</itemAttributesRequired>\r\n            <lotRequired>Not Required</lotRequired>\r\n            <productStatusRequired>Accept If Not Present</productStatusRequired>\r\n            <countryOfOriginRequired>Not Required</countryOfOriginRequired>\r\n            <serialNumberTrackingRequired>Not Required</serialNumberTrackingRequired>\r\n        </attributes>\r\n    </wincantonStandardWMSItem>\r\n    <internalActionFields>\r\n        <actionID>actionID0</actionID>\r\n        <actionDateTime>2006-05-04T18:13:51.0</actionDateTime>\r\n    </internalActionFields>\r\n</wincantonStandardWMSItemRequest>\r\n"
+						},
+						"url": "https://wincanton-nonprod-dlb.lb.anypointdns.net/int-s-mh2020-itemmanagement-api-test/api/v1/item"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Item",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "client_Id",
+								"value": "65135e1e404e45fba5c7f1d53984984a",
+								"type": "text"
+							},
+							{
+								"key": "client_secret",
+								"value": "B8ECcb1eCED44e52808345A6f4e1941d",
+								"type": "text"
+							},
+							{
+								"key": "clientCode",
+								"value": "P01101",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/xml",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<wincantonStandardWMSItemRequest xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n    <wincantonStandardWMSItem>\r\n        <itemCode>itemCode0</itemCode>\r\n        <status>Active</status>\r\n        <descriptions>\r\n            <longDescription>longDescription0</longDescription>\r\n            <itemDescription>itemDescription0</itemDescription>\r\n        </descriptions>\r\n        <baseStorageUnitofMeasure>Unit</baseStorageUnitofMeasure>\r\n        <orderingUnitofMeasure>Unit</orderingUnitofMeasure>\r\n        <color>colo</color>\r\n        <sizeDescription>sizeDescription</sizeDescription>\r\n        <barcode>barcode0</barcode>\r\n        <dimensions>\r\n            <itemDimensionSet>\r\n                <handlingUnitType>Case</handlingUnitType>\r\n                <sizeDimensions>\r\n                    <length>2311040.52</length>\r\n                    <width>017421.26</width>\r\n                    <height>23025528.72</height>\r\n                    <uom>Centimetre</uom>\r\n                </sizeDimensions>\r\n                <weightDimensions>\r\n                    <weight>3269.4816</weight>\r\n                    <uom>KGS</uom>\r\n                </weightDimensions>\r\n                <volumeDimensions>\r\n                    <volume>31.3079</volume>\r\n                    <uom>Millilitres</uom>\r\n                </volumeDimensions>\r\n            </itemDimensionSet>\r\n        </dimensions>\r\n        <handlingUnits>\r\n            <handlingUnit>\r\n                <handlingUnitType>Case</handlingUnitType>\r\n                <unitQuantity>50</unitQuantity>\r\n                <GTIN>GTIN0</GTIN>\r\n            </handlingUnit>\r\n        </handlingUnits>\r\n        <shelfLife>\r\n            <shelfLifeIndicator>1</shelfLifeIndicator>\r\n            <shelfLifeDays>13457</shelfLifeDays>\r\n        </shelfLife>\r\n        <referenceFields>\r\n            <referenceStrings>\r\n                <referenceFieldString>referenceFieldString0</referenceFieldString>\r\n                <referenceFieldString>referenceFieldString1</referenceFieldString>\r\n            </referenceStrings>\r\n            <referenceNumbers>\r\n                <referenceFieldNumber>0.00000</referenceFieldNumber>\r\n                <referenceFieldNumber>0.00000</referenceFieldNumber>\r\n            </referenceNumbers>\r\n        </referenceFields>\r\n        <supplierCrossReferenceInformation>\r\n            <supplierBarcode>supplierBarcode0</supplierBarcode>\r\n            <supplierQuantity>50</supplierQuantity>\r\n            <itemBarcode>itemBarcode0</itemBarcode>\r\n        </supplierCrossReferenceInformation>\r\n        <attributes>\r\n            <standardBundleQuantity>500000000</standardBundleQuantity>\r\n            <productType>pro</productType>\r\n            <subGroup>sub</subGroup>\r\n            <salesGroup>salesG</salesGroup>\r\n            <ECCNNumber>ECCNNu</ECCNNumber>\r\n            <expiryDateRequired>Prompt if Null</expiryDateRequired>\r\n            <itemAttributesRequired>Allow User Override</itemAttributesRequired>\r\n            <lotRequired>Not Required</lotRequired>\r\n            <productStatusRequired>Accept If Not Present</productStatusRequired>\r\n            <countryOfOriginRequired>Not Required</countryOfOriginRequired>\r\n            <serialNumberTrackingRequired>Not Required</serialNumberTrackingRequired>\r\n        </attributes>\r\n    </wincantonStandardWMSItem>\r\n    <internalActionFields>\r\n        <actionID>actionID0</actionID>\r\n        <actionDateTime>2006-05-04T18:13:51.0</actionDateTime>\r\n    </internalActionFields>\r\n</wincantonStandardWMSItemRequest>\r\n",
+							"options": {
+								"raw": {
+									"language": "xml"
+								}
+							}
+						},
+						"url": "https://wincanton-nonprod-dlb.lb.anypointdns.net/int-s-mh2020-itemmanagement-api-test/api/v1/item/12356503"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Item",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "client_Id",
+								"value": "65135e1e404e45fba5c7f1d53984984a",
+								"type": "text"
+							},
+							{
+								"key": "client_secret",
+								"value": "B8ECcb1eCED44e52808345A6f4e1941d",
+								"type": "text"
+							},
+							{
+								"key": "clientCode",
+								"value": "P01101",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/xml",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<wincantonStandardWMSItemRequest xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n    <wincantonStandardWMSItem>\r\n        <itemCode>itemCode0</itemCode>\r\n        <status>Active</status>\r\n        <descriptions>\r\n            <longDescription>longDescription0</longDescription>\r\n            <itemDescription>itemDescription0</itemDescription>\r\n        </descriptions>\r\n        <baseStorageUnitofMeasure>Unit</baseStorageUnitofMeasure>\r\n        <orderingUnitofMeasure>Unit</orderingUnitofMeasure>\r\n        <color>colo</color>\r\n        <sizeDescription>sizeDescription</sizeDescription>\r\n        <barcode>barcode0</barcode>\r\n        <dimensions>\r\n            <itemDimensionSet>\r\n                <handlingUnitType>Case</handlingUnitType>\r\n                <sizeDimensions>\r\n                    <length>2311040.52</length>\r\n                    <width>017421.26</width>\r\n                    <height>23025528.72</height>\r\n                    <uom>Centimetre</uom>\r\n                </sizeDimensions>\r\n                <weightDimensions>\r\n                    <weight>3269.4816</weight>\r\n                    <uom>KGS</uom>\r\n                </weightDimensions>\r\n                <volumeDimensions>\r\n                    <volume>31.3079</volume>\r\n                    <uom>Millilitres</uom>\r\n                </volumeDimensions>\r\n            </itemDimensionSet>\r\n        </dimensions>\r\n        <handlingUnits>\r\n            <handlingUnit>\r\n                <handlingUnitType>Case</handlingUnitType>\r\n                <unitQuantity>50</unitQuantity>\r\n                <GTIN>GTIN0</GTIN>\r\n            </handlingUnit>\r\n        </handlingUnits>\r\n        <shelfLife>\r\n            <shelfLifeIndicator>1</shelfLifeIndicator>\r\n            <shelfLifeDays>13457</shelfLifeDays>\r\n        </shelfLife>\r\n        <referenceFields>\r\n            <referenceStrings>\r\n                <referenceFieldString>referenceFieldString0</referenceFieldString>\r\n                <referenceFieldString>referenceFieldString1</referenceFieldString>\r\n            </referenceStrings>\r\n            <referenceNumbers>\r\n                <referenceFieldNumber>0.00000</referenceFieldNumber>\r\n                <referenceFieldNumber>0.00000</referenceFieldNumber>\r\n            </referenceNumbers>\r\n        </referenceFields>\r\n        <supplierCrossReferenceInformation>\r\n            <supplierBarcode>supplierBarcode0</supplierBarcode>\r\n            <supplierQuantity>50</supplierQuantity>\r\n            <itemBarcode>itemBarcode0</itemBarcode>\r\n        </supplierCrossReferenceInformation>\r\n        <attributes>\r\n            <standardBundleQuantity>500000000</standardBundleQuantity>\r\n            <productType>pro</productType>\r\n            <subGroup>sub</subGroup>\r\n            <salesGroup>salesG</salesGroup>\r\n            <ECCNNumber>ECCNNu</ECCNNumber>\r\n            <expiryDateRequired>Prompt if Null</expiryDateRequired>\r\n            <itemAttributesRequired>Allow User Override</itemAttributesRequired>\r\n            <lotRequired>Not Required</lotRequired>\r\n            <productStatusRequired>Accept If Not Present</productStatusRequired>\r\n            <countryOfOriginRequired>Not Required</countryOfOriginRequired>\r\n            <serialNumberTrackingRequired>Not Required</serialNumberTrackingRequired>\r\n        </attributes>\r\n    </wincantonStandardWMSItem>\r\n    <internalActionFields>\r\n        <actionID>actionID0</actionID>\r\n        <actionDateTime>2006-05-04T18:13:51.0</actionDateTime>\r\n    </internalActionFields>\r\n</wincantonStandardWMSItemRequest>\r\n"
+						},
+						"url": "https://wincanton-nonprod-dlb.lb.anypointdns.net/int-s-mh2020-itemmanagement-api-test/api/v1/item/12356503"
+					},
+					"response": []
+				},
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "client_Id",
+								"value": "65135e1e404e45fba5c7f1d53984984a",
+								"type": "text"
+							},
+							{
+								"key": "client_secret",
+								"value": "B8ECcb1eCED44e52808345A6f4e1941d",
+								"type": "text"
+							}
+						],
+						"url": "https://wincanton-nonprod-dlb.lb.anypointdns.net/int-s-mh2020-itemmanagement-api-test/api/v1/healthCheck"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "LOCAL",
+			"item": [
+				{
+					"name": "healthCheck",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "https://localhost:8092/api/v1/healthCheck"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Item Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "clientCode",
+								"value": "P01101",
+								"type": "text"
+							}
+						],
+						"url": "https://localhost:8092/api/v1/item/123/status"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Item",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "clientCode",
+								"value": "P01101",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/xml",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/xml",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<wincantonStandardWMSItemRequest xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n    <wincantonStandardWMSItem>\r\n        <itemCode>101</itemCode>\r\n        <status>Active</status>\r\n        <descriptions>\r\n            <longDescription>longDescription0</longDescription>\r\n            <itemDescription>itemDescription0</itemDescription>\r\n        </descriptions>\r\n        <baseStorageUnitofMeasure>Unit</baseStorageUnitofMeasure>\r\n        <orderingUnitofMeasure>Unit</orderingUnitofMeasure>\r\n        <color>colo</color>\r\n        <sizeDescription>sizeDescription</sizeDescription>\r\n        <barcode>barcode0</barcode>\r\n        <dimensions>\r\n            <itemDimensionSet>\r\n                <handlingUnitType>Case</handlingUnitType>\r\n                <sizeDimensions>\r\n                    <length>2311040.52</length>\r\n                    <width>017421.26</width>\r\n                    <height>23025528.72</height>\r\n                    <uom>Centimetre</uom>\r\n                </sizeDimensions>\r\n                <weightDimensions>\r\n                    <weight>3269.4816</weight>\r\n                    <uom>KGS</uom>\r\n                </weightDimensions>\r\n                <volumeDimensions>\r\n                    <volume>31.3079</volume>\r\n                    <uom>Millilitres</uom>\r\n                </volumeDimensions>\r\n            </itemDimensionSet>\r\n        </dimensions>\r\n        <handlingUnits>\r\n            <handlingUnit>\r\n                <handlingUnitType>Case</handlingUnitType>\r\n                <unitQuantity>50</unitQuantity>\r\n                <GTIN>GTIN0</GTIN>\r\n            </handlingUnit>\r\n        </handlingUnits>\r\n        <shelfLife>\r\n            <shelfLifeIndicator>1</shelfLifeIndicator>\r\n            <shelfLifeDays>13457</shelfLifeDays>\r\n        </shelfLife>\r\n        <referenceFields>\r\n            <referenceStrings>\r\n                <referenceFieldString>referenceFieldString0</referenceFieldString>\r\n                <referenceFieldString>referenceFieldString1</referenceFieldString>\r\n            </referenceStrings>\r\n            <referenceNumbers>\r\n                <referenceFieldNumber>0.00000</referenceFieldNumber>\r\n                <referenceFieldNumber>0.00000</referenceFieldNumber>\r\n            </referenceNumbers>\r\n        </referenceFields>\r\n        <supplierCrossReferenceInformation>\r\n            <supplierBarcode>supplierBarcode0</supplierBarcode>\r\n            <supplierQuantity>50</supplierQuantity>\r\n            <itemBarcode>itemBarcode0</itemBarcode>\r\n        </supplierCrossReferenceInformation>\r\n        <attributes>\r\n            <standardBundleQuantity>500000000</standardBundleQuantity>\r\n            <productType>pro</productType>\r\n            <subGroup>sub</subGroup>\r\n            <salesGroup>salesG</salesGroup>\r\n            <ECCNNumber>ECCNNu</ECCNNumber>\r\n            <expiryDateRequired>Prompt if Null</expiryDateRequired>\r\n            <itemAttributesRequired>Allow User Override</itemAttributesRequired>\r\n            <lotRequired>Not Required</lotRequired>\r\n            <productStatusRequired>Accept If Not Present</productStatusRequired>\r\n            <countryOfOriginRequired>Not Required</countryOfOriginRequired>\r\n            <serialNumberTrackingRequired>Not Required</serialNumberTrackingRequired>\r\n        </attributes>\r\n    </wincantonStandardWMSItem>\r\n    <internalActionFields>\r\n        <actionID>actionID0</actionID>\r\n        <actionDateTime>2006-05-04T18:13:51.0</actionDateTime>\r\n    </internalActionFields>\r\n</wincantonStandardWMSItemRequest>\r\n"
+						},
+						"url": "https://localhost:8092/api/v1/item"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Order",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": "https://localhost:8092/api/v1/order"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Order",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": "https://localhost:8092/api/v1/order"
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

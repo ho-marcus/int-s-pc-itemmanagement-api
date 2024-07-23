@@ -1,0 +1,27 @@
+%dw 2.0
+
+type auto_d2ebd05d_0bc1_447b_baf6_a42a6f95a3e3_Input_Attributes = {|
+  clientCertificate?: {|
+    publicKey?: {|  |}, 
+    "type"?: String, 
+    encoded?: Binary
+  |}, 
+  headers: {|
+    "X-TRANSACTION-ID"?: String, 
+    "X-CORRELATION-ID"?: String, 
+    clientCode: String
+  |}, 
+  listenerPath: String, 
+  method: String, 
+  queryParams: {|  |}, 
+  queryString: String, 
+  relativePath: String, 
+  remoteAddress: String, 
+  requestPath: String, 
+  requestUri: String, 
+  scheme: String, 
+  uriParams: {| itemCode: String |}, 
+  version: String, 
+  localAddress: String
+|}
+

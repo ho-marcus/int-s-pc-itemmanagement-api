@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd">
+	<flow name="error-handler-route" doc:id="27bbb574-5ff7-4831-9051-2f5e95138b3a" >
+		<json-logger:logger doc:name="debug-logger" doc:id="23048c35-ba66-4a44-8acc-378d12aabed3" config-ref="JSON_Logger_Config" message="In ErrorHandlerDefault" tracePoint="EXCEPTION" priority="DEBUG" category="support"/>
+		<choice doc:name="override-default-error-handler?" doc:id="1eb0955f-ae7f-49cf-94fb-92bbc4398c22" >
+			<when expression="#[(Mule::p('errors.override.' ++ lower(error.errorType.namespace)) default 'false') == 'true']">
+				<ee:transform doc:name="call-custom-default-error-handler" doc:id="b8522879-a45a-4560-91aa-afe0b214556f" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+import camelize from dw::core::Strings
+output application/java
+var namespace = if (["BUSINESS", "TECHNICAL"] contains error.errorType.namespace) camelize(error.errorType.namespace) else error.errorType.namespace 
+---
+Mule::lookup('Custom' ++ namespace ++ 'ErrorHandler', {})]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="set-error-variables" doc:id="1f55254b-41f6-4dc0-81c1-46ab0a30e5b7">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+var namespace = lower(error.errorType.namespace)
+var response = Mule::p('errors.response.' ++ namespace ++ '.' ++ error.errorType.identifier) default "{\"errorMessage\": \"An error has occured\",\"httpStatus\" : \"500\"}"
+---
+if(error.errorType.identifier == "RETRY_EXHAUSTED")
+(read(Mule::p('errors.response.' ++ lower(error.suppressedErrors.errorType.namespace[0]) ++ '.' ++ (error.suppressedErrors.errorType.identifier[0])) as String, 'application/json') default read(Mule::p('errors.response.' ++ lower(error.suppressedErrors.errorType.namespace[0]) ++ '.' ++ 'DEFAULT') as String, 'application/json'))
+
+else(
+	if (response != null)
+read(response as String, 'application/json')
+else
+read(Mule::p('errors.response.' ++ namespace ++ '.DEFAULT') as String, 'application/json'))]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<choice doc:name="extend-standard-default-error-handler?" doc:id="d7f6bd69-d7d5-4e84-bc9a-1e75aa3d1354" >
+					<when expression="#[(Mule::p('errors.extend.' ++ lower(error.errorType.namespace))  default 'false') == 'true']">
+						<ee:transform doc:name="invoke-extension" doc:id="85bec646-d2c0-41bd-97b8-e6c095ee0ed1" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+import camelize from dw::core::Strings
+output application/java
+var namespace = if (["BUSINESS", "TECHNICAL"] contains error.errorType.namespace) camelize(error.errorType.namespace) else error.errorType.namespace 
+---
+Mule::lookup('Extend' ++ namespace ++ 'ErrorHandler', {})]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					</when>
+					<otherwise >
+						<json-logger:logger doc:name="debug-logger" doc:id="d0c86453-5192-4ac2-be01-323630a2c17e" config-ref="JSON_Logger_Config" message="Default default error" tracePoint="EXCEPTION" priority="DEBUG" category="support"/>
+					</otherwise>
+				</choice>
+			
+</otherwise>
+		</choice>
+	</flow>
+</mule>

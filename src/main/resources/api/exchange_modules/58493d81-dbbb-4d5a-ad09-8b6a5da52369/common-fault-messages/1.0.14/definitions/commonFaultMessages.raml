@@ -1,0 +1,33 @@
+#%RAML 1.0 DataType
+type: object
+displayName: Platform Datatype
+properties:
+    statusCode: 
+      description: Status Code of error
+      type: number
+    statusType: 
+      description: Status Type of error
+      type: string  
+    statusMessage: 
+      description: Status Message of error
+      type: string
+    transactionID: 
+      description: Transaction ID is a unique identifier for all tracked events
+      type: string
+    correlationID: 
+      description: Correlation ID is a unique identifier for internal tracking 
+      type: string
+    statusDetails:
+      description: Error details as a string, within a custom object or a list of multiple errors in an array
+      type: array
+      items:
+        properties:
+          messageID:
+            type: string
+            description: If applicable, the reference of the ID form the provider
+          messageType:
+            type: string
+            description: Error, Warning, Info
+          messageDetails:
+            type: string
+            description: Explaination of the error message

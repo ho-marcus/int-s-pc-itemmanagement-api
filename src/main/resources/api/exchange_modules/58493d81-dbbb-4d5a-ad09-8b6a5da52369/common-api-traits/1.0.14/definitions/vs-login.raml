@@ -1,0 +1,14 @@
+#%RAML 1.0 Trait
+usage: Apply this trait to each API so that it has a transaction id to trace it's flow within the enterprise.
+headers:
+  edgeUsername:
+    description: Contains username to log into the Edge Platform.
+    type: string
+    required: true
+    example: 3F2504E0-4F89-11D3-9A0C-0305E82C3301
+  
+  edgePassword:
+    description: Contains the password to log into the Edge Platform.
+    type: string
+    required: true
+    example: 3F2504E0-4F89-11D3-9A0C-0305E82C3301  

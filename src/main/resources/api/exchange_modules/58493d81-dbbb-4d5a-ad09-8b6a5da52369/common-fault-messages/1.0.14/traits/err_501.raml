@@ -1,0 +1,8 @@
+#%RAML 1.0 Trait
+    responses:
+      501:
+        description: This status code and error message will be returned if a client has been given access to the service, but they have not been configured on the Integration API Database tables
+        body:
+          application/json:
+            type: !include ../definitions/commonFaultMessages.raml
+            example: !include ../examples/501.json

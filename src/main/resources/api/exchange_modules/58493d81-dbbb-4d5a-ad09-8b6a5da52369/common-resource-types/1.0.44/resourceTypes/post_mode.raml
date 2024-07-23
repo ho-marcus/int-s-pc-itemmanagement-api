@@ -1,0 +1,8 @@
+#%RAML 1.0 ResourceType
+    description: <<postRecordSummary>>
+    post:      
+      description: <<postRecordDescription>>
+      body:
+        type: <<postRecordType>>
+        example: <<postRecordExample>>      
+      is: [ success_200: {recordExample: <<postResponseExample_200>>},success_201: {recordExample: <<postOutputExample_201>>},success_202: {recordExample: <<postOutputExample_202>>},err_400,err_401,err_404,err_405,err_406,err_407,err_415,err_500,err_503,err_504 ]
