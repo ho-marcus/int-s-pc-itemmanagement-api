@@ -45,18 +45,18 @@ http://www.mulesoft.org/schema/mule/sns http://www.mulesoft.org/schema/mule/sns/
 			algorithm="Blowfish" mode="ECB"/>
 	</secure-properties:config>
 	<http:listener-config
-		name="int-s-mh2020-itemmanagement-api-httpListenerConfig">
+		name="int-s-pc-itemmanagement-api-httpListenerConfig">
 		<http:listener-connection host="${https.host}"
 			port="${https.private.port}" protocol="HTTPS" tlsContext="TLS_Server_Side"/>
 	</http:listener-config>
 	<global-property doc:name="Global Property" doc:id="1e0f4ad9-b3fc-472f-a4af-2abbe36d98e3" name="mule.env" value="dev" />
 	<global-property doc:name="Global Property" doc:id="f5a40753-4efb-4aa1-b51b-7bd0b56ba2ea" name="secret.key" value="x!A%C*F-JaNdRgUk" />
-	 <api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="a7e637a5-cd3e-432c-8fbd-b70c883229d7" flowRef="int-s-mh2020-itemmanagement-api-main" /> <!-- To update with correct flow -->
+	 <api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="a7e637a5-cd3e-432c-8fbd-b70c883229d7" flowRef="int-s-pc-itemmanagement-api-main" /> <!-- To update with correct flow -->
 	<tls:context name="TLS_Server_Side" doc:name="TLS Context" doc:id="79da0412-1bc3-46c7-91e9-eb39e1e22247" >
 		<tls:key-store type="jks" path="${secure::tls.keystoreFilePath}" alias="${secure::tls.alias}" keyPassword="${secure::tls.keyPassword}" password="${secure::tls.password}"/>
 	</tls:context>
-	<sftp:config name="MH_SFTP-config" doc:name="SFTP Config" doc:id="4508a983-53eb-4012-9183-e9e9dcab6b88" >
-		<sftp:connection host="#[vars.sftpDetails.sftpHost]" port="#[vars.sftpDetails.sftpPort]" username="#[vars.sftpDetails.sftpUser]" password="#[vars.sftpDetails.sftpPassword]" connectionTimeout="${mhSftp.timeout}" responseTimeout="${mhSftp.timeout}"/>
+	<sftp:config name="SFTP-config" doc:name="SFTP Config" doc:id="4508a983-53eb-4012-9183-e9e9dcab6b88" >
+		<sftp:connection host="#[vars.sftpDetails.sftpHost]" port="#[vars.sftpDetails.sftpPort]" username="#[vars.sftpDetails.sftpUser]" password="#[vars.sftpDetails.sftpPassword]" connectionTimeout="${sftp.timeout}" responseTimeout="${sftp.timeout}"/>
 	</sftp:config>
 	<http:request-config name="SYS_Integration_Services_HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="20d92f6c-d80c-4336-8ec6-09da0607ba38" basePath="${system.integrationServices.basepath}" responseTimeout="${system.integrationServices.timeout}">
 		<http:request-connection protocol="HTTPS" host="${system.host}" port="${system.integrationServices.port}" streamResponse="true">
@@ -65,7 +65,7 @@ http://www.mulesoft.org/schema/mule/sns http://www.mulesoft.org/schema/mule/sns/
 			</tls:context>
 		</http:request-connection>
 	</http:request-config>
-	<db:config name="WMS_MH_DB-config" doc:name="Database Config" doc:id="e79e1e90-51ce-4be9-99a0-8218800a8f29" >
+	<db:config name="WMS_DB-config" doc:name="Database Config" doc:id="e79e1e90-51ce-4be9-99a0-8218800a8f29" >
 		<db:oracle-connection host="#[vars.wmsdb.dbServer]" port="#[vars.wmsdb.dbPort]" user="#[vars.wmsdb.dbUser]" password="#[vars.wmsdb.dbPassword]" instance="#[vars.wmsdb.dbsid]"/>
 	</db:config>
 	<db:config name="Integration_DB-config" doc:name="Database Config" doc:id="86f3d8fa-8eb5-4ebd-8fff-97d230ae185d" >
@@ -103,7 +103,7 @@ http://www.mulesoft.org/schema/mule/sns http://www.mulesoft.org/schema/mule/sns/
 			<flow-ref doc:name="error-main-error-handler" doc:id="12cea43f-d967-4e24-acab-0390e781c7f0" name="error-main-error-handler" />
 		</on-error-continue>
 	</error-handler>
-    <apikit:config name="int-s-mh2020-itemmanagement-api-config" api="int-s-mh2020-itemmanagement-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <apikit:config name="int-s-pc-itemmanagement-api-config" api="int-s-pc-itemmanagement-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
 	<sub-flow name="remove-variables" doc:id="36be5203-6648-45e1-bef2-35211f927e5b" >
 		<foreach doc:name="For Each" doc:id="833d5c95-a59e-4510-9e6e-36115dcc9e77" collection="#[vars pluck ($$)]" >
 			<remove-variable doc:name="remove-variables" doc:id="249b2e2e-37fa-4cd3-ac56-76c2c62f0459" variableName="#[payload]" />

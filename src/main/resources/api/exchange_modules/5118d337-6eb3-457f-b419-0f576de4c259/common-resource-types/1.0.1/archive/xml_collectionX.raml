@@ -1,0 +1,46 @@
+#%RAML 1.0 ResourceType
+
+#GET method XML
+    get?:
+      description: <<getDescription>>
+      is: [success_200_xml: {recordType: <<getResponseType>>, recordExample: <<getResponseExample>>}, getErrorResponse]
+
+
+#POST method XML
+    post?:      
+      description: <<postDescription>>
+      body:
+        application/xml:
+          type: <<postRequestType>>
+          example: <<postRequestExample>>      
+      is: [success_201_xml: {recordType: <<postResponseType_201>>, recordExample: <<postResponseExample_201>>}, success_202: {recordType: <<postResponseType_202>>, recordExample: <<postResponseExample_202>>}, postErrorResponse]
+
+
+#PUT method XML
+    put?:      
+      description: <<putDescription>>
+      body:
+        application/xml:
+          type: <<putRequestType>>
+          example: <<putRequestExample>>      
+      is: [success_200_xml: {recordType: <<putResponseType_200>>, recordExample: <<putResponseExample_200>>}, success_202: {recordType: <<putResponseType_202>>, recordExample: <<putResponseExample_202>>},  putErrorResponse]
+
+
+#PATCH method XML
+    patch?:      
+      description: <<patchDescription>>
+      body:
+        application/xml:
+          type: <<patchRequestType>>
+          example: <<patchRequestExample>>      
+      is: [success_200: {recordType: <<patchResponseType_200>>, recordExample: <<patchResponseExample_200>>}, success_202: {recordType: <<patchResponseType_202>>, recordExample: <<patchResponseExample_202>>}, patchErrorResponse]
+
+
+#DELETE method XML
+    delete?:      
+      description: <<deleteDescription>> 
+      body:
+        application/xml:
+          type: <<deleteRequestType>>
+          example: <<deleteRequestExample>>  
+      is: [success_200_xml: {recordType: <<deleteResponseType_200>>, recordExample: <<deleteResponseExample_200>>}, success_202: {recordType: <<deleteResponseType_202>>, recordExample: <<deleteResponseExample_202>>}, deleteErrorResponse]

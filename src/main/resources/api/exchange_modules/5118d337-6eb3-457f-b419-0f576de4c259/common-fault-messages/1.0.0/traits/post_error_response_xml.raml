@@ -1,0 +1,70 @@
+#%RAML 1.0 Trait
+
+responses:
+      400:
+        description: This status code and error message will be returned in case if the API encounters a bad request.
+        body:
+          application/xml:
+            type: !include ../definitions/commonFaultMessages.raml
+            example: !include ../examples/400.xml
+      401:
+        description: This status code and error message will be returned in case if no credentials are provided or the provided credentials are refused
+        body:
+          application/xml:
+            type: !include ../definitions/commonFaultMessages.raml
+            example: !include ../examples/401.xml
+      404:
+        description: This status code and error message will be returned in case if the API encounters any errors like Resource not found.
+        body:
+          application/xml:
+            type: !include ../definitions/commonFaultMessages.raml
+            example: !include ../examples/404.xml
+      405:
+        description: This status code and error message will be returned in case if the API encounters any errors like Method not allowed.
+        body:
+          application/xml:
+            type: !include ../definitions/commonFaultMessages.raml
+            example: !include ../examples/405.xml
+      406:
+        description: This status code and error message will be returned in case if the API encounters any errors like Not acceptable.
+        body:
+          application/xml:
+            type: !include ../definitions/commonFaultMessages.raml
+            example: !include ../examples/406.xml
+      407:
+        description: This status code and error message will be returned in case if the API requires proxy authentication
+        body:
+          application/xml:
+            type: !include ../definitions/commonFaultMessages.raml
+            example: !include ../examples/407.xml
+      415:
+        description: This status code and error message will be returned in case if the API encounters any errors like Unsupported media type.
+        body:
+          application/xml:
+            type: !include ../definitions/commonFaultMessages.raml
+            example: !include ../examples/415.xml
+      500:
+        description: This status code and error message will be returned in case if the API encounters any internal server error and is unable to process the request
+        body:
+          application/xml:
+            type: !include ../definitions/commonFaultMessages.raml
+            example: !include ../examples/500.xml
+      501:
+        description: This status code and error message will be returned in case if the API encounters any internal server error and is unable to process the request
+        body:
+          application/xml:
+            type: !include ../definitions/commonFaultMessages.raml
+            example: !include ../examples/501.xml
+      503:
+        description: This status code and error message will be returned in case if the server is currently unable to handle the request due to a temporary outage
+        body:
+          application/xml:
+            type: !include ../definitions/commonFaultMessages.raml
+            example: !include ../examples/503.xml
+      504:
+        description: This status code and error message will be returned in case if the proxy timed out waiting for response from service implementation
+        body:
+          application/xml:
+            type: !include ../definitions/commonFaultMessages.raml
+            example: !include ../examples/504.xml
+      

@@ -1,0 +1,20 @@
+#%RAML 1.0 Trait
+
+# HTTP Success codes
+traits:
+  success_list_paged_200: !include definitions/success_list_paged_200.raml
+  success_list_200: !include definitions/success_list_200.raml
+  success_200: !include definitions/success_200.raml 
+  success_200_xml: !include definitions/success_200_xml.raml
+  success_201: !include definitions/success_201.raml
+  success_201_xml: !include definitions/success_201_xml.raml
+  success_202: !include definitions/success_202.raml   
+  success_202_xml: !include definitions/success_202_xml.raml      
+  success_204: !include definitions/success_204.raml
+  success_206: !include definitions/success_206.raml
+  success_206_xml: !include definitions/success_206_xml.raml
+  nullvalue_204: !include definitions/nullvalue_204.raml
+
+# Generic success traits
+  generic_success_trait_json: !include traits/generic_success_trait_json.raml
+  generic_success_trait_xml: !include traits/generic_success_trait_xml.raml

@@ -117,7 +117,7 @@ payload.errorMessage]]></ee:set-variable>
 						<ee:set-payload ><![CDATA[%dw 2.0
 output application/xml skipNullOn="everywhere"
 ---
-wincantonStandardWMSItemStatusResponse: {
+StandardWMSItemStatusResponse: {
     responseMessage: {
         message: vars.errorMessage,
         description: if(error.description contains "https://")(null)else(error.description),
@@ -197,7 +197,7 @@ import * from dw::core::Strings
 	clientName: authentication.properties.clientName, 
 	remoteIP: attributes.remoteAddress, 
 	appName: p('app.name'),
-	interfaceId: if(vars.status == "CREATE")("WN-WMS-FL-001")else if(vars.status == "UPDATE")("WN-WMS-FL-003")else if(vars.status == "CANCEL")("WN-WMS-FL-004")else("WN-WMS-FL-002"),
+	interfaceId: if(vars.status == "CREATE")("WMS-FL-001")else if(vars.status == "UPDATE")("WMS-FL-003")else if(vars.status == "CANCEL")("WMS-FL-004")else("WMS-FL-002"),
 	systemDate: now() as LocalDateTime,
 	environmentName: p('mule.env'),
 	operation: if(vars.status == "CREATE")("Create Item")else if(vars.status == "UPDATE")("Update Item")else if(vars.status == "CANCEL")("Cancel Item")else("Read Item Status"),

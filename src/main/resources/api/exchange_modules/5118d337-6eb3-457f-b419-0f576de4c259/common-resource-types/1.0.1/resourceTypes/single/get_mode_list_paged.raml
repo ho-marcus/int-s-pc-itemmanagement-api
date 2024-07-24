@@ -1,0 +1,8 @@
+#%RAML 1.0 ResourceType
+
+  description: <<getListSummary>>
+  get:
+    description: <<getListDescription>>
+    is: 
+      - jsonResponse: {statusCode: 200, responseDescription: "This status code will be returned when the request has succeeded", recordType: <<getResponseListType>>, recordExample: <<getResponseListExample>>, paginated: {maxItems: <<maxItems>>}}
+      - getErrorResponse

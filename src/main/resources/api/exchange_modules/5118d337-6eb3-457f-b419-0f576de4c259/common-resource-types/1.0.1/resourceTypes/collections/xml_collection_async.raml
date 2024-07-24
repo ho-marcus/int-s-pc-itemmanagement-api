@@ -1,0 +1,56 @@
+#%RAML 1.0 ResourceType
+
+#GET method XML
+    get?:
+      description: <<getDescription>>
+      is: 
+        - xmlResponse: {statusCode: 200, responseDescription: "This status code will be returned when the request has succeeded", recordType: <<getResponseType>>, recordExample: <<getResponseExample>>}
+        - getErrorResponse
+      
+
+#POST method XML
+    post?:      
+      description: <<postDescription>>
+      body:
+        application/xml:
+          type: <<postRequestType>>
+          example: <<postRequestExample>>      
+      is: 
+        - xmlResponse: {statusCode: 202, responseDescription: "This status code will be returned when the request has been received but not yet processed", recordType: <<postResponseType>>, recordExample: <<postResponseExample>>}
+        - postErrorResponse
+      
+
+#PUT method XML
+    put?:      
+      description: <<putDescription>>
+      body:
+        application/xml:
+          type: <<putRequestType>>
+          example: <<putRequestExample>>      
+      is: 
+        - xmlResponse: {statusCode: 202, responseDescription: "This status code will be returned when the request has been received but not yet processed", recordType: <<putResponseType>>, recordExample: <<putResponseExample>>}
+        - putErrorResponse
+
+
+#PATCH method XML
+    patch?:      
+      description: <<patchDescription>>
+      body:
+        application/xml:
+          type: <<patchRequestType>>
+          example: <<patchRequestExample>>      
+      is: 
+        - xmlResponse: {statusCode: 202, responseDescription: "This status code will be returned when the request has been received but not yet processed", recordType: <<patchResponseType>>, recordExample: <<patchResponseExample>>}
+        - patchErrorResponse
+
+
+#DELETE method XML
+    delete?:      
+      description: <<deleteDescription>> 
+      body:
+        application/xml:
+          type: <<deleteRequestType>>
+          example: <<deleteRequestExample>>  
+      is: 
+        - xmlResponse: {statusCode: 202, responseDescription: "This status code will be returned when the request has been received but not yet processed", recordType: <<deleteResponseType>>, recordExample: <<deleteResponseExample>>}
+        - deleteErrorResponse

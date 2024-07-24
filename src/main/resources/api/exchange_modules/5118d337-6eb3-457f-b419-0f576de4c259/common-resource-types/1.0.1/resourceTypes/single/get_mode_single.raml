@@ -1,0 +1,7 @@
+#%RAML 1.0 ResourceType
+    
+  description: <<getSummary>>
+  get:
+    description: <<getDescription>>
+    is: 
+      - jsonResponse: {statusCode: 200, responseDescription: "This status code will be returned when the request has succeeded", recordType: <<getResponseType>>, recordExample: <<getResponseExample>>, getErrorResponse}

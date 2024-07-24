@@ -1,0 +1,14 @@
+#%RAML 1.0 ResourceType
+  get:
+    description: This resource provides the life status of the API.
+    is: [globalErrorResponse]
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+                "status": "OK",
+                "version": "v1",
+                "time": "2015-08-19T15:10:16Z"
+              }

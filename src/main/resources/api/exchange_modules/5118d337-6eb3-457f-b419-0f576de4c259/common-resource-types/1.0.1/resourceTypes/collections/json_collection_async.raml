@@ -1,0 +1,56 @@
+#%RAML 1.0 ResourceType
+
+#GET method JSON
+    get?:
+      description: <<getDescription>>
+      is: 
+        - jsonResponse: {statusCode: 200, responseDescription: "This status code will be returned when the request has succeeded", recordType: <<getResponseType>>, recordExample: <<getResponseExample>>}
+        - getErrorResponse
+      
+
+#POST method JSON
+    post?:      
+      description: <<postDescription>>
+      body:
+        application/json:
+          type: <<postRequestType>>
+          example: <<postRequestExample>>      
+      is: 
+        - jsonResponse: {statusCode: 202, responseDescription: "This status code will be returned when the request has been received but not yet processed", recordType: <<postResponseType>>, recordExample: <<postResponseExample>>}
+        - postErrorResponse
+      
+
+#PUT method JSON
+    put?:      
+      description: <<putDescription>>
+      body:
+        application/json:
+          type: <<putRequestType>>
+          example: <<putRequestExample>>      
+      is: 
+        - jsonResponse: {statusCode: 202, responseDescription: "This status code will be returned when the request has been received but not yet processed", recordType: <<putResponseType>>, recordExample: <<putResponseExample>>}
+        - putErrorResponse
+
+
+#PATCH method JSON
+    patch?:      
+      description: <<patchDescription>>
+      body:
+        application/json:
+          type: <<patchRequestType>>
+          example: <<patchRequestExample>>      
+      is: 
+        - jsonResponse: {statusCode: 202, responseDescription: "This status code will be returned when the request has been received but not yet processed", recordType: <<patchResponseType>>, recordExample: <<patchResponseExample>>}
+        - patchErrorResponse
+
+
+#DELETE method JSON
+    delete?:      
+      description: <<deleteDescription>> 
+      body:
+        application/json:
+          type: <<deleteRequestType>>
+          example: <<deleteRequestExample>>  
+      is: 
+        - jsonResponse: {statusCode: 202, responseDescription: "This status code will be returned when the request has been received but not yet processed", recordType: <<deleteResponseType>>, recordExample: <<deleteResponseExample>>}
+        - deleteErrorResponse

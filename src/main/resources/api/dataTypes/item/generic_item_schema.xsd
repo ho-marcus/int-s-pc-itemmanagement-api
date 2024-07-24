@@ -2,29 +2,17 @@
 <xs:schema attributeFormDefault="unqualified" xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
 	<xs:annotation>
 		<xs:appinfo>
-			<title>Wincanton Standard WMS Item Request</title>
+			<title>Standard WMS Item Request</title>
 		</xs:appinfo>
 		<xs:documentation>
-    (c) Wincanton plc. 2023
-    This structure is used to pass information about the WMS Item to the Wincanton Item service by an external, or internal, party.
-    Current Version: 1.1
-
-	Initial Version: 1.0 Date: 3rd March 2022 Design: Andy Varney and Rich Varley
-	
-	Amended Version: 1.1 Date: 9th November 2023
-	Author: Rich Varley
-	Amendment: Fixes to support correct handling of Reference Fields (Strings and Numbers) to match the Manhattan WMS requirement.
-	
-	Amended Version: 1.2 Date: 29th January 2024
-	Author: Rich Varley
-	Amendment: Fixes to support correct handling of different handling units and their dimensions
+    This structure is used to pass information about the WMS Item to the Item service by an external, or internal, party.
 	
         </xs:documentation>
 	</xs:annotation>
-	<xs:element name="wincantonStandardWMSItemRequest">
+	<xs:element name="StandardWMSItemRequest">
 		<xs:complexType>
 			<xs:sequence>
-				<xs:element name="wincantonStandardWMSItem">
+				<xs:element name="StandardWMSItem">
 					<xs:complexType>
 						<xs:sequence>
 							<xs:element name="itemCode">
@@ -38,7 +26,7 @@
 							<xs:element name="status">
 								<xs:annotation>
 									<xs:documentation>This represents the status of the item as declared by the client.
-                                        Wincanton will support a defined list of acceptable values.</xs:documentation>
+                                    </xs:documentation>
 								</xs:annotation>
 								<xs:simpleType>
 									<xs:restriction base="xs:string">
@@ -215,7 +203,6 @@
 															<xs:documentation>
 																Reference Fields to hold extra textual information that may be required on the outbound Goods Receipt interface.
 																Mostly used for bespoke solutions.
-																Amendment Version 1.1: minOccurs set to 10 and minLength set to 0 to allow an empty tag to be provided.  The mapping should not need to be changed as there will now be a matching input element for each WMS output element although if the input element is NULL no output element will need to be created.
 															</xs:documentation>
 														</xs:annotation>
 														<xs:simpleType>
@@ -236,7 +223,6 @@
 															<xs:documentation>
 																Reference Fields to hold and extra numerical information that may be required on the outbound Goods Receipt interface. 
 																Mostly used for bespoke solutions.
-																Amendment Version 1.1: minOccurs set to 5.  The mapping will need to be changed to include a rule that does not create an output element if the input value is 0.  There will now be a matching input element for each WMS output element which will allow alignment of the elements.
 															</xs:documentation>
 														</xs:annotation>
 														<xs:simpleType>
@@ -296,7 +282,7 @@
 							</xs:element>
 							<xs:element minOccurs="0" name="attributes">
 								<xs:annotation>
-									<xs:documentation>Group Element holding a list of attributes entities relating to this Item that may need to be held within Wincanton systems for future reference.  Possible attributes could include EAN Codes, Guarantee Periods or Product Groups.
+									<xs:documentation>Group Element holding a list of attributes entities relating to this Item that may need to be held for future reference.  Possible attributes could include EAN Codes, Guarantee Periods or Product Groups.
 									</xs:documentation>
 								</xs:annotation>
 								<xs:complexType>
@@ -514,7 +500,7 @@
 						</xs:element>
 						<xs:element name="uom">
 							<xs:annotation>
-								<xs:documentation>Unit of Measure for the Dimensions.  Wincanton currently support Centimetre only</xs:documentation>
+								<xs:documentation>Unit of Measure for the Dimensions.</xs:documentation>
 							</xs:annotation>
 							<xs:simpleType>
 								<xs:restriction base="xs:string">
@@ -541,7 +527,7 @@
 						</xs:element>
 						<xs:element name="uom">
 							<xs:annotation>
-								<xs:documentation>Unit of Measure for the Weight.  Wincanton currently supports KGS and LBS only</xs:documentation>
+								<xs:documentation>Unit of Measure for the Weight.</xs:documentation>
 							</xs:annotation>
 							<xs:simpleType>
 								<xs:restriction base="xs:string">
@@ -569,7 +555,7 @@
 						</xs:element>
 						<xs:element name="uom">
 							<xs:annotation>
-								<xs:documentation>Unit of Measure for the Volume.  Wincanton currently supports Millilitres and Cubic Centimetres only</xs:documentation>
+								<xs:documentation>Unit of Measure for the Volume.</xs:documentation>
 							</xs:annotation>
 							<xs:simpleType>
 								<xs:restriction base="xs:string">

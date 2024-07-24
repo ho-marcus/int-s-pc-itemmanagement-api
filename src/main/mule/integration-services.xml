@@ -192,19 +192,19 @@ output application/json
 }]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<json-logger:logger doc:name="debug-logger-wmsdb-details" doc:id="15362a12-36a5-4cd2-901a-5bd8828d3c00" config-ref="JSON_Logger_Config" message="WMS MHDB Details" priority="DEBUG" category="support" />
+		<json-logger:logger doc:name="debug-logger-wmsdb-details" doc:id="15362a12-36a5-4cd2-901a-5bd8828d3c00" config-ref="JSON_Logger_Config" message="WMS DB Details" priority="DEBUG" category="support" />
 		<choice doc:name="check-dbvalues-exists?" doc:id="172a065d-7dbd-4e40-996e-a889cc3a83b0">
 			<when expression='#[isEmpty(vars.wmsdb.dbServer) or isEmpty(vars.wmsdb.dbPort) or isEmpty(vars.wmsdb.dbUser) or isEmpty(vars.wmsdb.dbPassword) or isEmpty(vars.wmsdb.dbsid)]'>
-				<json-logger:logger doc:name="debug-logger-wmsdb-details-not-available" doc:id="fc153a86-d957-40fe-8b72-e76244d6794f" config-ref="JSON_Logger_Config" message='#["WMS MH DB details are not available"]' priority="DEBUG" category="support">
+				<json-logger:logger doc:name="debug-logger-wmsdb-details-not-available" doc:id="fc153a86-d957-40fe-8b72-e76244d6794f" config-ref="JSON_Logger_Config" message='#["WMS DB details are not available"]' priority="DEBUG" category="support">
 					<json-logger:content ><![CDATA[#[import modules::JSONLoggerModule output application/json ---
 {
 	payload: JSONLoggerModule::stringifyNonJSON(payload) 
 }]]]></json-logger:content>
 				</json-logger:logger>
-				<raise-error doc:name="BUSINESS:SERVER_ERROR" doc:id="c81a50f8-f2a2-4b76-a10c-341cd92e087e" description="WMS MH DB details are not available" type="BUSINESS:SERVER_ERROR" />
+				<raise-error doc:name="BUSINESS:SERVER_ERROR" doc:id="c81a50f8-f2a2-4b76-a10c-341cd92e087e" description="WMS DB details are not available" type="BUSINESS:SERVER_ERROR" />
 			</when>
 			<otherwise >
-				<json-logger:logger doc:name="debug-logger-continue" doc:id="43535a85-6e5e-4398-8b5c-22aa97f162f9" config-ref="JSON_Logger_Config" message='#["Received WMS MHDB values from ISDB"]' priority="DEBUG" category="support" >
+				<json-logger:logger doc:name="debug-logger-continue" doc:id="43535a85-6e5e-4398-8b5c-22aa97f162f9" config-ref="JSON_Logger_Config" message='#["Received WMS DB values from ISDB"]' priority="DEBUG" category="support" >
 					<json-logger:content ><![CDATA[#[import modules::JSONLoggerModule output application/json ---
 {
 	payload: JSONLoggerModule::stringifyNonJSON(payload) 

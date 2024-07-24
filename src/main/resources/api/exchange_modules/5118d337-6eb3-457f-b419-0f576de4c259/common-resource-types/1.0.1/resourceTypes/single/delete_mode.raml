@@ -1,0 +1,11 @@
+#%RAML 1.0 ResourceType
+
+  description: <<deleteSummary>>
+  delete:      
+    description: <<deleteDescription>>
+    body:
+      type: <<deleteRecordType>>
+      example: <<deleteRecordExample>>      
+    is: 
+      - jsonResponse: {statusCode: 200, responseDescription: "This status code will be returned when the request has succeeded ", recordType: <<deleteResponseType>>, recordExample: <<deleteResponseExample>>}
+      - deleteErrorResponse

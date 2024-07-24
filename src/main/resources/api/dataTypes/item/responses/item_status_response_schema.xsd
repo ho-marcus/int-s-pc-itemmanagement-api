@@ -2,27 +2,20 @@
 <xs:schema attributeFormDefault="unqualified" xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
 	<xs:annotation>
 		<xs:appinfo>
-			<title>Wincanton Standard WMS Item Status Response</title>
+			<title>Standard WMS Item Status Response</title>
 		</xs:appinfo>
-		<xs:documentation> (c) Wincanton plc. 2023 This structure is used to pass information about
+		<xs:documentation> This structure is used to pass information about
 			the WMS Item requested and/or any informational or error messages about the request
 			processed back to the caller of the service. It should be used in conjunction with the
 			HTTP Response Code to understand any errors occurring during the processing of each
 			request.
-
-			Current Version: 1.1
-
-			Initial Version: 1.0 Date: 3rd March 2022 Design: Andy Varney and Rich Varley
-			Amended Version: 1.1 Date: 15th May 2022 
-				Author: Rich Varley
-				Amendment: Amended the lastStatusUpdateID element to be a string data type rather than the datetime that was originally stated in error.
 			
 		</xs:documentation>
 	</xs:annotation>
-	<xs:element name="wincantonStandardWMSItemStatusResponse">
+	<xs:element name="StandardWMSItemStatusResponse">
 		<xs:complexType>
 			<xs:choice>
-				<xs:element name="wincantonStandardWMSItemStatus">
+				<xs:element name="StandardWMSItemStatus">
 					<xs:complexType>
 						<xs:sequence>
 							<xs:element name="itemCode">
@@ -58,8 +51,7 @@
 							<xs:element name="itemStatus">
 								<xs:annotation>
 									<xs:documentation>This represents the status of the item as
-										recorded on the WMS. Wincanton will support a defined list
-										of acceptable values. </xs:documentation>
+										recorded on the WMS. </xs:documentation>
 								</xs:annotation>
 								<xs:simpleType>
 									<xs:restriction base="xs:string">

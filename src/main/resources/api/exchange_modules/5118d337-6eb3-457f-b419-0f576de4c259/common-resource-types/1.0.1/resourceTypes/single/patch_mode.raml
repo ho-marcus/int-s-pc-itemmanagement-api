@@ -1,0 +1,11 @@
+#%RAML 1.0 ResourceType
+
+  description: <<patchSummary>>
+  patch:      
+    description: <<patchDescription>>
+    body:
+      type: <<patchRecordType>>
+      example: <<patchRecordExample>>      
+    is: 
+      - jsonResponse: {statusCode: 200, responseDescription: "This status code will be returned when the request has succeeded ", recordType: <<patchResponseType>>, recordExample: <<patchResponseExample>>}
+      - patchErrorResponse

@@ -1,0 +1,11 @@
+#%RAML 1.0 ResourceType
+
+  description: <<putSummary>>
+  put:      
+    description: <<putDescription>>
+    body:
+      type: <<putRecordType>>
+      example: <<putRecordExample>>      
+    is: 
+      - jsonResponse: {statusCode: 200, responseDescription: "This status code will be returned when the request has succeeded ", recordType: <<putResponseType>>, recordExample: <<putResponseExample>>}
+      - putErrorResponse

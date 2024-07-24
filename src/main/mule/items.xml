@@ -19,13 +19,13 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 }]]]></json-logger:content>
 		</json-logger:logger>
 		<flow-ref doc:name="get-wmsdb-details" doc:id="a3e94793-7e1f-4310-8a07-0be61bf1c75f" name="get-wmsdb-details"/>
-		<json-logger:logger doc:name="wmsdb-details-retrieved" doc:id="2476d982-0c2c-4db6-8968-4ca23090d1d3" config-ref="JSON_Logger_Config" message='#["WMS MH details retrieved for client " ++ vars.clientCode]'>
+		<json-logger:logger doc:name="wmsdb-details-retrieved" doc:id="2476d982-0c2c-4db6-8968-4ca23090d1d3" config-ref="JSON_Logger_Config" message='#["WMS details retrieved for client " ++ vars.clientCode]'>
 			<json-logger:content><![CDATA[#[import modules::JSONLoggerModule output application/json ---
 {
     WMSDBDetails: JSONLoggerModule::stringifyNonJSON(vars.wmsdb) 
 }]]]></json-logger:content>
 		</json-logger:logger>
-		<set-variable value='#[output application/json&#10;---&#10;"Get item record for " ++ vars.itemCode ++ " from Manhattan database"]' doc:name="eventName" doc:id="4f993f0c-9297-4813-a01d-e735707288d6" variableName="eventName" />
+		<set-variable value='#[output application/json&#10;---&#10;"Get item record for " ++ vars.itemCode ++ " from database"]' doc:name="eventName" doc:id="4f993f0c-9297-4813-a01d-e735707288d6" variableName="eventName" />
 		<until-successful maxRetries="${retry.numOfRetries}" doc:name="Until Successful" doc:id="b3f9b3a4-2a89-42c2-a29b-ec97146f5f52" millisBetweenRetries="${retry.milliseconds}">
 			<db:select doc:name="select-from-ITEM_CBO" doc:id="1ad00a1a-a5cc-47c0-82ca-3b27ededf4b4" config-ref="${wms.configRef}">
 			<db:sql><![CDATA[select DESCRIPTION, COMMERCE_ATTRIBUTE1, to_char(LAST_UPDATED_DTTM,'dd/mm/yyyy hh24:mi:ss') as LAST_UPDATED_DTTM, MARK_FOR_DELETION from ITEM_CBO where COMPANY_ID = :businessUnit and ITEM_NAME = :itemCode]]></db:sql>
@@ -43,10 +43,10 @@ output application/json
 payload[0]]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<json-logger:logger doc:name="record-retrieved-from-manhattan" doc:id="eb633614-0c1e-4a60-9a04-7707310c640b" config-ref="JSON_Logger_Config" message='#["Record search response from Manhattan for item " ++ vars.itemCode]'/>
+		<json-logger:logger doc:name="record-retrieved-from-db" doc:id="eb633614-0c1e-4a60-9a04-7707310c640b" config-ref="JSON_Logger_Config" message='#["Record search response from DB for item " ++ vars.itemCode]'/>
 		<choice doc:name="record-found?" doc:id="714add0f-0002-408c-8988-8577bb849f33" >
 			<when expression="#[!isEmpty(payload)]">
-				<json-logger:logger doc:name="debug-logger-record-found-in-manhattan" doc:id="7872d957-5f76-4756-a53c-63e51caeb98c" config-ref="JSON_Logger_Config" message="Item record found in Manhattan" priority="DEBUG" category="support"/>
+				<json-logger:logger doc:name="debug-logger-record-found-in-db" doc:id="7872d957-5f76-4756-a53c-63e51caeb98c" config-ref="JSON_Logger_Config" message="Item record found in DB" priority="DEBUG" category="support"/>
 				<set-variable value='#[output application/json&#10;---&#10;"Get item status record for " ++ vars.itemCode ++ " from Integration Services database"]' doc:name="eventName" doc:id="58bc4d1a-ae7a-4f4a-9af7-1b57aa7936e9" variableName="eventName" />
 				<until-successful maxRetries="${retry.numOfRetries}" doc:name="Until Successful" doc:id="76fba135-c835-4632-ae42-7a4786bcfebc" millisBetweenRetries="${retry.milliseconds}">
 					<http:request method="GET" doc:name="http-integration-services-system-get-record-status" doc:id="883437fd-1574-43d7-8afe-756734a8a6af" config-ref="SYS_Integration_Services_HTTP_Request_configuration" path="${system.integrationServices.getRecordStatusPath}" target="recordStatus">
@@ -88,8 +88,8 @@ payload[0]]]></ee:set-payload>
 output application/xml
 ---
 {
-	wincantonStandardWMSItemStatusResponse: {
-		wincantonStandardWMSItemStatus: {
+	StandardWMSItemStatusResponse: {
+		StandardWMSItemStatus: {
 			itemCode: vars.itemCode,
 			descriptions: {
 				longDescription: payload.DESCRIPTION,
@@ -159,53 +159,53 @@ fun itemWmosMapping(value) = if(value == "Not Required") "N"
 		Message: {
 
 			Item: {
-				ItemName: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.itemCode withMaxSize 100,
+				ItemName: payload.StandardWMSItemRequest.StandardWMSItem.itemCode withMaxSize 100,
 				BusinessUnit: vars.clientInfo.businessUnit withMaxSize 9,
-				Description: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.descriptions.itemDescription withMaxSize 65,
-				LongDescription: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.descriptions.longDescription withMaxSize 500,
-				BaseStorageUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.baseStorageUnitofMeasure == "Unit") "Units" else null,
-				ItemColor: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.color withMaxSize 4,
-				ItemSizeDesc: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.sizeDescription withMaxSize 15,
-				UnitWeight: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.weight as Number {format: "#.#"} default null,
-				WeightUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.uom == "LBS") "Lbs" 
-							else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.uom  == "KGS") "kgs" else null,
-				UnitVolume: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.volume as Number {format: "#.#"} default null,
-				VolumeUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Millilitres") "ml" 
-		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Centimetres") "cm3" 
-		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Feet") "cu ft" 
-		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Metres") "cu m" 
-		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Inches") "cu in" else null ,
-		   		UnitHeight: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.height as Number {format: "#.#"} default null,
-				UnitWidth: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.width as Number {format: "#.#"} default null,
-				UnitLength: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.length as Number {format: "#.#"} default null,
-				DimensionUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.uom == "Centimetre") "cm" else null,
-				QtyUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.orderingUnitofMeasure == "Unit") "Units" else null,
-				ItemBarCode: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.barcode withMaxSize 50,
-				ProductType: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.productType withMaxSize 3,
-				StdBundlQty: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.standardBundleQuantity as String {format: "#.00"} default null,
+				Description: payload.StandardWMSItemRequest.StandardWMSItem.descriptions.itemDescription withMaxSize 65,
+				LongDescription: payload.StandardWMSItemRequest.StandardWMSItem.descriptions.longDescription withMaxSize 500,
+				BaseStorageUOM: if(payload.StandardWMSItemRequest.StandardWMSItem.baseStorageUnitofMeasure == "Unit") "Units" else null,
+				ItemColor: payload.StandardWMSItemRequest.StandardWMSItem.color withMaxSize 4,
+				ItemSizeDesc: payload.StandardWMSItemRequest.StandardWMSItem.sizeDescription withMaxSize 15,
+				UnitWeight: payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.weight as Number {format: "#.#"} default null,
+				WeightUOM: if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.uom == "LBS") "Lbs" 
+							else if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.uom  == "KGS") "kgs" else null,
+				UnitVolume: payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.volume as Number {format: "#.#"} default null,
+				VolumeUOM: if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Millilitres") "ml" 
+		   					else if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Centimetres") "cm3" 
+		   					else if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Feet") "cu ft" 
+		   					else if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Metres") "cu m" 
+		   					else if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Inches") "cu in" else null ,
+		   		UnitHeight: payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.height as Number {format: "#.#"} default null,
+				UnitWidth: payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.width as Number {format: "#.#"} default null,
+				UnitLength: payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.length as Number {format: "#.#"} default null,
+				DimensionUOM: if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.uom == "Centimetre") "cm" else null,
+				QtyUOM: if(payload.StandardWMSItemRequest.StandardWMSItem.orderingUnitofMeasure == "Unit") "Units" else null,
+				ItemBarCode: payload.StandardWMSItemRequest.StandardWMSItem.barcode withMaxSize 50,
+				ProductType: payload.StandardWMSItemRequest.StandardWMSItem.attributes.productType withMaxSize 3,
+				StdBundlQty: payload.StandardWMSItemRequest.StandardWMSItem.attributes.standardBundleQuantity as String {format: "#.00"} default null,
 				ItemProfileName: vars.clientInfo.businessUnit withMaxSize 30,
-				ReferenceField1: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[0] withMaxSize 25 default null,
-				ReferenceField2: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[1] withMaxSize 25 default null,
-				ReferenceField3: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[2] withMaxSize 25 default null,
-				ReferenceField4: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[3] withMaxSize 25 default null,
-				ReferenceField5: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[4] withMaxSize 25 default null,
-				ReferenceField6: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[5] withMaxSize 25 default null,
-				ReferenceField7: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[6] withMaxSize 25 default null,
-				ReferenceField8: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[7] withMaxSize 25 default null,
-				ReferenceField9: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[8] withMaxSize 25 default null,
-				ReferenceField10: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[9] withMaxSize 25 default null,
-				ReferenceNumberField1: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0]))) payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0] as String {format: "#.00000"} else null) default null,
-				ReferenceNumberField2: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1]))) payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1] as String {format: "#.00000"} else null) default null,
-				ReferenceNumberField3: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2]))) payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2] as String {format: "#.00000"} else null) default null,
-				ReferenceNumberField4: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3]))) payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3] as String {format: "#.00000"} else null) default null,
-				ReferenceNumberField5: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4]))) payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4] as String {format: "#.00000"} else null) default null,
-				CommerceAttribute1: payload.wincantonStandardWMSItemRequest.internalActionFields.actionID withMaxSize 50,
+				ReferenceField1: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[0] withMaxSize 25 default null,
+				ReferenceField2: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[1] withMaxSize 25 default null,
+				ReferenceField3: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[2] withMaxSize 25 default null,
+				ReferenceField4: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[3] withMaxSize 25 default null,
+				ReferenceField5: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[4] withMaxSize 25 default null,
+				ReferenceField6: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[5] withMaxSize 25 default null,
+				ReferenceField7: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[6] withMaxSize 25 default null,
+				ReferenceField8: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[7] withMaxSize 25 default null,
+				ReferenceField9: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[8] withMaxSize 25 default null,
+				ReferenceField10: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[9] withMaxSize 25 default null,
+				ReferenceNumberField1: (if ((payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0]))) payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField2: (if ((payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1]))) payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField3: (if ((payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2]))) payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField4: (if ((payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3]))) payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField5: (if ((payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4]))) payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4] as String {format: "#.00000"} else null) default null,
+				CommerceAttribute1: payload.StandardWMSItemRequest.internalActionFields.actionID withMaxSize 50,
 				MarkForDeletion: "0",
 				ItemSupplierXrefList: {
 					ItemSupplierXref: {
-						SupplierItemBarcode: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.supplierCrossReferenceInformation.supplierBarcode withMaxSize 20,
-						ScanQnty: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.supplierCrossReferenceInformation.supplierQuantity as String {format: "#.00"} default null,
-						ItemBarCode: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.supplierCrossReferenceInformation.itemBarcode withMaxSize 50,
+						SupplierItemBarcode: payload.StandardWMSItemRequest.StandardWMSItem.supplierCrossReferenceInformation.supplierBarcode withMaxSize 20,
+						ScanQnty: payload.StandardWMSItemRequest.StandardWMSItem.supplierCrossReferenceInformation.supplierQuantity as String {format: "#.00"} default null,
+						ItemBarCode: payload.StandardWMSItemRequest.StandardWMSItem.supplierCrossReferenceInformation.itemBarcode withMaxSize 50,
 						MarkForDeletion: "0"
 					}
 				},
@@ -213,12 +213,12 @@ fun itemWmosMapping(value) = if(value == "Not Required") "N"
 					ItemFacilityWMS: {
 						FacilityName: vars.clientInfo.facilityID,
 						ItemFacilityProfileName: vars.clientInfo.businessUnit withMaxSize 30,
-						ShelfDays: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.shelfLife.shelfLifeDays as Number withMaxSize 5 default null,
+						ShelfDays: payload.StandardWMSItemRequest.StandardWMSItem.shelfLife.shelfLifeDays as Number withMaxSize 5 default null,
 						MarkForDeletion: "0"
 					}
 				},
 				ItemPackageList: {
-				    ItemPackage: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.*handlingUnits.*handlingUnitCase map ((hCase, index) -> {
+				    ItemPackage: payload.StandardWMSItemRequest.StandardWMSItem.*handlingUnits.*handlingUnitCase map ((hCase, index) -> {
                         PkgUOM: "Cases",
                         Weight: hCase.handlingUnitDimensions.weightDimensions.weight as Number {format: "#.#"} default null, 
                         Quantity: hCase.handlingUnitDetails.unitQuantity as String {format: "#.0000"},
@@ -237,7 +237,7 @@ fun itemWmosMapping(value) = if(value == "Not Required") "N"
                         IsStandard: "1",
                         MarkForDeletion: "0",
                     }),
-                    ItemPackage: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.*handlingUnits.*handlingUnitPallet map ((hPallet, index) -> {
+                    ItemPackage: payload.StandardWMSItemRequest.StandardWMSItem.*handlingUnits.*handlingUnitPallet map ((hPallet, index) -> {
                       	PkgUOM: "Pallets",
                       	Weight: hPallet.handlingUnitDimensions.weightDimensions.weight as Number {format: "#.#"} default null, 
                       	Quantity: hPallet.handlingUnitDetails.unitQuantity as String {format: "#.0000"},
@@ -258,21 +258,21 @@ fun itemWmosMapping(value) = if(value == "Not Required") "N"
                     }),
                 },
 				ItemWmos: {
-					ProdSubGrp: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.subGroup withMaxSize 3,
-					SaleGrp: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.salesGroup withMaxSize 6,
-					XpireDateReqd: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.expiryDateRequired == "Prompt if Null") "0" 
-									else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.expiryDateRequired == "Always Prompt") "1"
-									else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.expiryDateRequired == "Never Prompt") "N"
+					ProdSubGrp: payload.StandardWMSItemRequest.StandardWMSItem.attributes.subGroup withMaxSize 3,
+					SaleGrp: payload.StandardWMSItemRequest.StandardWMSItem.attributes.salesGroup withMaxSize 6,
+					XpireDateReqd: if(payload.StandardWMSItemRequest.StandardWMSItem.attributes.expiryDateRequired == "Prompt if Null") "0" 
+									else if(payload.StandardWMSItemRequest.StandardWMSItem.attributes.expiryDateRequired == "Always Prompt") "1"
+									else if(payload.StandardWMSItemRequest.StandardWMSItem.attributes.expiryDateRequired == "Never Prompt") "N"
 									else null,
-					ItemAttrReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.itemAttributesRequired),
-					LotReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.lotRequired),
-					ProdStatReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.productStatusRequired),
-					CntryOfOrgnReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.countryOfOriginRequired),
-					EccnNbr: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.ECCNNumber withMaxSize 6,
-					SrlNbrReq: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Not Required") "0"
-								else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Track During Outbound Only") "1"
-								else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Track During Inbound Only") "3"
-								else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Full Tracking Required") "4"
+					ItemAttrReqd: itemWmosMapping(payload.StandardWMSItemRequest.StandardWMSItem.attributes.itemAttributesRequired),
+					LotReqd: itemWmosMapping(payload.StandardWMSItemRequest.StandardWMSItem.attributes.lotRequired),
+					ProdStatReqd: itemWmosMapping(payload.StandardWMSItemRequest.StandardWMSItem.attributes.productStatusRequired),
+					CntryOfOrgnReqd: itemWmosMapping(payload.StandardWMSItemRequest.StandardWMSItem.attributes.countryOfOriginRequired),
+					EccnNbr: payload.StandardWMSItemRequest.StandardWMSItem.attributes.ECCNNumber withMaxSize 6,
+					SrlNbrReq: if(payload.StandardWMSItemRequest.StandardWMSItem.attributes.serialNumberTrackingRequired == "Not Required") "0"
+								else if(payload.StandardWMSItemRequest.StandardWMSItem.attributes.serialNumberTrackingRequired == "Track During Outbound Only") "1"
+								else if(payload.StandardWMSItemRequest.StandardWMSItem.attributes.serialNumberTrackingRequired == "Track During Inbound Only") "3"
+								else if(payload.StandardWMSItemRequest.StandardWMSItem.attributes.serialNumberTrackingRequired == "Full Tracking Required") "4"
 								else null
 				}
 			}
@@ -305,7 +305,7 @@ output application/json
 		</json-logger:logger>
 		<set-variable value='#[output application/json&#10;---&#10;"Dropping file " ++ vars.filename ++ " into SFTP"]' doc:name="eventName" doc:id="2440dc2f-bf70-4707-93a3-bb2b60b8f03e" variableName="eventName" />
 		<until-successful maxRetries="${retry.numOfRetries}" doc:name="Until Successful" doc:id="d998df83-ba4b-4174-ad73-82b70be6e0f7" millisBetweenRetries="${retry.milliseconds}">
-					<sftp:write doc:name="write-to-manhattan-sftp" doc:id="87659f50-fc81-4926-8c97-fdc2d96ae554" config-ref="MH_SFTP-config" path="#[vars.sftpDetails.sftpDestinationFolder ++ vars.filename]">
+					<sftp:write doc:name="write-to-sftp" doc:id="87659f50-fc81-4926-8c97-fdc2d96ae554" config-ref="SFTP-config" path="#[vars.sftpDetails.sftpDestinationFolder ++ vars.filename]">
 		</sftp:write>
 		</until-successful>
 		<ee:transform doc:name="set-next filename-sequence" doc:id="b9388ea3-1d14-45c0-bb23-71319b38b062" >
@@ -364,53 +364,53 @@ fun itemWmosMapping(value) = if(value == "Not Required") "N"
 		},
 		Message: {
 			Item: {
-				ItemName: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.itemCode withMaxSize 100,
+				ItemName: payload.StandardWMSItemRequest.StandardWMSItem.itemCode withMaxSize 100,
 				BusinessUnit: vars.clientInfo.businessUnit withMaxSize 9,
-				Description: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.descriptions.itemDescription withMaxSize 65,
-				LongDescription: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.descriptions.longDescription withMaxSize 500,
-				BaseStorageUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.baseStorageUnitofMeasure == "Unit") "Units" else null,
-				ItemColor: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.color withMaxSize 4,
-				ItemSizeDesc: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.sizeDescription withMaxSize 15,
-				UnitWeight: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.weight as Number {format: "#.#"} default null,
-				WeightUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.uom == "LBS") "Lbs" 
-							else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.uom  == "KGS") "kgs" else null,
-				UnitVolume: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.volume as Number {format: "#.#"} default null,
-				VolumeUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Millilitres") "ml" 
-		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Centimetres") "cm3" 
-		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Feet") "cu ft" 
-		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Metres") "cu m" 
-		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Inches") "cu in" else null ,
-		   		UnitHeight: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.height as Number {format: "#.#"} default null,
-				UnitWidth: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.width as Number {format: "#.#"} default null,
-				UnitLength: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.length as Number {format: "#.#"} default null,
-				DimensionUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.uom == "Centimetre") "cm" else null,
-				QtyUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.orderingUnitofMeasure == "Unit") "Units" else null,
-				ItemBarCode: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.barcode withMaxSize 50,
-				ProductType: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.productType withMaxSize 3,
-				StdBundlQty: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.standardBundleQuantity as String {format: "#.00"} default null,
+				Description: payload.StandardWMSItemRequest.StandardWMSItem.descriptions.itemDescription withMaxSize 65,
+				LongDescription: payload.StandardWMSItemRequest.StandardWMSItem.descriptions.longDescription withMaxSize 500,
+				BaseStorageUOM: if(payload.StandardWMSItemRequest.StandardWMSItem.baseStorageUnitofMeasure == "Unit") "Units" else null,
+				ItemColor: payload.StandardWMSItemRequest.StandardWMSItem.color withMaxSize 4,
+				ItemSizeDesc: payload.StandardWMSItemRequest.StandardWMSItem.sizeDescription withMaxSize 15,
+				UnitWeight: payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.weight as Number {format: "#.#"} default null,
+				WeightUOM: if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.uom == "LBS") "Lbs" 
+							else if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.uom  == "KGS") "kgs" else null,
+				UnitVolume: payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.volume as Number {format: "#.#"} default null,
+				VolumeUOM: if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Millilitres") "ml" 
+		   					else if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Centimetres") "cm3" 
+		   					else if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Feet") "cu ft" 
+		   					else if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Metres") "cu m" 
+		   					else if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Inches") "cu in" else null ,
+		   		UnitHeight: payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.height as Number {format: "#.#"} default null,
+				UnitWidth: payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.width as Number {format: "#.#"} default null,
+				UnitLength: payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.length as Number {format: "#.#"} default null,
+				DimensionUOM: if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.uom == "Centimetre") "cm" else null,
+				QtyUOM: if(payload.StandardWMSItemRequest.StandardWMSItem.orderingUnitofMeasure == "Unit") "Units" else null,
+				ItemBarCode: payload.StandardWMSItemRequest.StandardWMSItem.barcode withMaxSize 50,
+				ProductType: payload.StandardWMSItemRequest.StandardWMSItem.attributes.productType withMaxSize 3,
+				StdBundlQty: payload.StandardWMSItemRequest.StandardWMSItem.attributes.standardBundleQuantity as String {format: "#.00"} default null,
 				ItemProfileName: vars.clientInfo.businessUnit withMaxSize 30,
-				ReferenceField1: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[0] withMaxSize 25 default null,
-				ReferenceField2: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[1] withMaxSize 25 default null,
-				ReferenceField3: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[2] withMaxSize 25 default null,
-				ReferenceField4: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[3] withMaxSize 25 default null,
-				ReferenceField5: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[4] withMaxSize 25 default null,
-				ReferenceField6: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[5] withMaxSize 25 default null,
-				ReferenceField7: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[6] withMaxSize 25 default null,
-				ReferenceField8: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[7] withMaxSize 25 default null,
-				ReferenceField9: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[8] withMaxSize 25 default null,
-				ReferenceField10: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[9] withMaxSize 25 default null,
-				ReferenceNumberField1: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0])))payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0] as String {format: "#.00000"} else null) default null,
-				ReferenceNumberField2: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1])))payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1] as String {format: "#.00000"} else null) default null,
-				ReferenceNumberField3: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2])))payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2] as String {format: "#.00000"} else null) default null,
-				ReferenceNumberField4: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3])))payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3] as String {format: "#.00000"} else null) default null,
-				ReferenceNumberField5: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4])))payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4] as String {format: "#.00000"} else null) default null,
-				CommerceAttribute1: payload.wincantonStandardWMSItemRequest.internalActionFields.actionID withMaxSize 50,
+				ReferenceField1: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[0] withMaxSize 25 default null,
+				ReferenceField2: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[1] withMaxSize 25 default null,
+				ReferenceField3: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[2] withMaxSize 25 default null,
+				ReferenceField4: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[3] withMaxSize 25 default null,
+				ReferenceField5: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[4] withMaxSize 25 default null,
+				ReferenceField6: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[5] withMaxSize 25 default null,
+				ReferenceField7: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[6] withMaxSize 25 default null,
+				ReferenceField8: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[7] withMaxSize 25 default null,
+				ReferenceField9: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[8] withMaxSize 25 default null,
+				ReferenceField10: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[9] withMaxSize 25 default null,
+				ReferenceNumberField1: (if ((payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0])))payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField2: (if ((payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1])))payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField3: (if ((payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2])))payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField4: (if ((payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3])))payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField5: (if ((payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4])))payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4] as String {format: "#.00000"} else null) default null,
+				CommerceAttribute1: payload.StandardWMSItemRequest.internalActionFields.actionID withMaxSize 50,
 				MarkForDeletion: "0",
 				ItemSupplierXrefList: {
 					ItemSupplierXref: {
-						SupplierItemBarcode: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.supplierCrossReferenceInformation.supplierBarcode withMaxSize 20,
-						ScanQnty: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.supplierCrossReferenceInformation.supplierQuantity as String {format: "#.00"} default null,
-						ItemBarCode: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.supplierCrossReferenceInformation.itemBarcode withMaxSize 50,
+						SupplierItemBarcode: payload.StandardWMSItemRequest.StandardWMSItem.supplierCrossReferenceInformation.supplierBarcode withMaxSize 20,
+						ScanQnty: payload.StandardWMSItemRequest.StandardWMSItem.supplierCrossReferenceInformation.supplierQuantity as String {format: "#.00"} default null,
+						ItemBarCode: payload.StandardWMSItemRequest.StandardWMSItem.supplierCrossReferenceInformation.itemBarcode withMaxSize 50,
 						MarkForDeletion: "0"
 					}
 				},
@@ -418,12 +418,12 @@ fun itemWmosMapping(value) = if(value == "Not Required") "N"
 					ItemFacilityWMS: {
 						FacilityName: vars.clientInfo.facilityID,
 						ItemFacilityProfileName: vars.clientInfo.businessUnit withMaxSize 30,
-						ShelfDays: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.shelfLife.shelfLifeDays as Number withMaxSize 5 default null,
+						ShelfDays: payload.StandardWMSItemRequest.StandardWMSItem.shelfLife.shelfLifeDays as Number withMaxSize 5 default null,
 						MarkForDeletion: "0"
 					}
 				},
 				ItemPackageList: {
-				    ItemPackage: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.*handlingUnits.*handlingUnitCase map ((hCase, index) -> {
+				    ItemPackage: payload.StandardWMSItemRequest.StandardWMSItem.*handlingUnits.*handlingUnitCase map ((hCase, index) -> {
                         PkgUOM: "Cases",
                         Weight: hCase.handlingUnitDimensions.weightDimensions.weight as Number {format: "#.#"} default null, 
                         Quantity: hCase.handlingUnitDetails.unitQuantity as String {format: "#.0000"},
@@ -442,7 +442,7 @@ fun itemWmosMapping(value) = if(value == "Not Required") "N"
                         IsStandard: "1",
                         MarkForDeletion: "0",
                     }),
-                    ItemPackage: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.*handlingUnits.*handlingUnitPallet map ((hPallet, index) -> {
+                    ItemPackage: payload.StandardWMSItemRequest.StandardWMSItem.*handlingUnits.*handlingUnitPallet map ((hPallet, index) -> {
                       	PkgUOM: "Pallets",
                       	Weight: hPallet.handlingUnitDimensions.weightDimensions.weight as Number {format: "#.#"} default null, 
                       	Quantity: hPallet.handlingUnitDetails.unitQuantity as String {format: "#.0000"},
@@ -463,21 +463,21 @@ fun itemWmosMapping(value) = if(value == "Not Required") "N"
                     }),
                 },
 				ItemWmos: {
-					ProdSubGrp: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.subGroup withMaxSize 3,
-					SaleGrp: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.salesGroup withMaxSize 6,
-					XpireDateReqd: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.expiryDateRequired == "Prompt if Null") "0" 
-									else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.expiryDateRequired == "Always Prompt") "1"
-									else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.expiryDateRequired == "Never Prompt") "N"
+					ProdSubGrp: payload.StandardWMSItemRequest.StandardWMSItem.attributes.subGroup withMaxSize 3,
+					SaleGrp: payload.StandardWMSItemRequest.StandardWMSItem.attributes.salesGroup withMaxSize 6,
+					XpireDateReqd: if(payload.StandardWMSItemRequest.StandardWMSItem.attributes.expiryDateRequired == "Prompt if Null") "0" 
+									else if(payload.StandardWMSItemRequest.StandardWMSItem.attributes.expiryDateRequired == "Always Prompt") "1"
+									else if(payload.StandardWMSItemRequest.StandardWMSItem.attributes.expiryDateRequired == "Never Prompt") "N"
 									else null,
-					ItemAttrReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.itemAttributesRequired),
-					LotReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.lotRequired),
-					ProdStatReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.productStatusRequired),
-					CntryOfOrgnReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.countryOfOriginRequired),
-					EccnNbr: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.ECCNNumber withMaxSize 6,
-					SrlNbrReq: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Not Required") "0"
-								else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Track During Outbound Only") "1"
-								else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Track During Inbound Only") "3"
-								else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Full Tracking Required") "4"
+					ItemAttrReqd: itemWmosMapping(payload.StandardWMSItemRequest.StandardWMSItem.attributes.itemAttributesRequired),
+					LotReqd: itemWmosMapping(payload.StandardWMSItemRequest.StandardWMSItem.attributes.lotRequired),
+					ProdStatReqd: itemWmosMapping(payload.StandardWMSItemRequest.StandardWMSItem.attributes.productStatusRequired),
+					CntryOfOrgnReqd: itemWmosMapping(payload.StandardWMSItemRequest.StandardWMSItem.attributes.countryOfOriginRequired),
+					EccnNbr: payload.StandardWMSItemRequest.StandardWMSItem.attributes.ECCNNumber withMaxSize 6,
+					SrlNbrReq: if(payload.StandardWMSItemRequest.StandardWMSItem.attributes.serialNumberTrackingRequired == "Not Required") "0"
+								else if(payload.StandardWMSItemRequest.StandardWMSItem.attributes.serialNumberTrackingRequired == "Track During Outbound Only") "1"
+								else if(payload.StandardWMSItemRequest.StandardWMSItem.attributes.serialNumberTrackingRequired == "Track During Inbound Only") "3"
+								else if(payload.StandardWMSItemRequest.StandardWMSItem.attributes.serialNumberTrackingRequired == "Full Tracking Required") "4"
 								else null
 				}
 			}
@@ -510,7 +510,7 @@ output application/json
 		</json-logger:logger>
 		<set-variable value='#[output application/json&#10;---&#10;"Dropping file " ++ vars.filename ++ " into SFTP"]' doc:name="eventName" doc:id="7dc7ba73-af3d-4f06-8d0a-18be07e22392" variableName="eventName" />
 		<until-successful maxRetries="${retry.numOfRetries}" doc:name="Until Successful" doc:id="337d4dc3-3c31-4337-aa91-cd5a7734868f" millisBetweenRetries="${retry.milliseconds}">
-			<sftp:write doc:name="write-to-manhattan-sftp" doc:id="32a3efeb-678f-43c0-a6c3-b6dbeab2cc4c" config-ref="MH_SFTP-config" path="#[vars.sftpDetails.sftpDestinationFolder ++ vars.filename]">
+			<sftp:write doc:name="write-to-sftp" doc:id="32a3efeb-678f-43c0-a6c3-b6dbeab2cc4c" config-ref="SFTP-config" path="#[vars.sftpDetails.sftpDestinationFolder ++ vars.filename]">
 		</sftp:write>
 		</until-successful>
 		<ee:transform doc:name="set-next filename-sequence" doc:id="299a4783-26be-467f-a445-9a582b0b55df" >
@@ -569,53 +569,53 @@ fun itemWmosMapping(value) = if(value == "Not Required") "N"
 		},
 		Message: {
 			Item: {
-				ItemName: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.itemCode withMaxSize 100,
+				ItemName: payload.StandardWMSItemRequest.StandardWMSItem.itemCode withMaxSize 100,
 				BusinessUnit: vars.clientInfo.businessUnit withMaxSize 9,
-				Description: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.descriptions.itemDescription withMaxSize 65,
-				LongDescription: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.descriptions.longDescription withMaxSize 500,
-				BaseStorageUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.baseStorageUnitofMeasure == "Unit") "Units" else null,
-				ItemColor: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.color withMaxSize 4,
-				ItemSizeDesc: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.sizeDescription withMaxSize 15,
-				UnitWeight: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.weight as Number {format: "#.#"} default null,
-				WeightUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.uom == "LBS") "Lbs" 
-							else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.uom  == "KGS") "kgs" else null,
-				UnitVolume: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.volume as Number {format: "#.#"} default null,
-				VolumeUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Millilitres") "ml" 
-		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Centimetres") "cm3" 
-		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Feet") "cu ft" 
-		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Metres") "cu m" 
-		   					else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Inches") "cu in" else null ,
-		   		UnitHeight: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.height as Number {format: "#.#"} default null,
-				UnitWidth: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.width as Number {format: "#.#"} default null,
-				UnitLength: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.length as Number {format: "#.#"} default null,
-				DimensionUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.uom == "Centimetre") "cm" else null,
-				QtyUOM: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.orderingUnitofMeasure == "Unit") "Units" else null,
-				ItemBarCode: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.barcode withMaxSize 50,
-				ProductType: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.productType withMaxSize 3,
-				StdBundlQty: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.standardBundleQuantity as String {format: "#.00"} default null,
+				Description: payload.StandardWMSItemRequest.StandardWMSItem.descriptions.itemDescription withMaxSize 65,
+				LongDescription: payload.StandardWMSItemRequest.StandardWMSItem.descriptions.longDescription withMaxSize 500,
+				BaseStorageUOM: if(payload.StandardWMSItemRequest.StandardWMSItem.baseStorageUnitofMeasure == "Unit") "Units" else null,
+				ItemColor: payload.StandardWMSItemRequest.StandardWMSItem.color withMaxSize 4,
+				ItemSizeDesc: payload.StandardWMSItemRequest.StandardWMSItem.sizeDescription withMaxSize 15,
+				UnitWeight: payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.weight as Number {format: "#.#"} default null,
+				WeightUOM: if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.uom == "LBS") "Lbs" 
+							else if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.weightDimensions.uom  == "KGS") "kgs" else null,
+				UnitVolume: payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.volume as Number {format: "#.#"} default null,
+				VolumeUOM: if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Millilitres") "ml" 
+		   					else if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Centimetres") "cm3" 
+		   					else if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Feet") "cu ft" 
+		   					else if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Metres") "cu m" 
+		   					else if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.volumeDimensions.uom == "Cubic Inches") "cu in" else null ,
+		   		UnitHeight: payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.height as Number {format: "#.#"} default null,
+				UnitWidth: payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.width as Number {format: "#.#"} default null,
+				UnitLength: payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.length as Number {format: "#.#"} default null,
+				DimensionUOM: if(payload.StandardWMSItemRequest.StandardWMSItem.unitDimensions.handlingUnitDimensions.sizeDimensions.uom == "Centimetre") "cm" else null,
+				QtyUOM: if(payload.StandardWMSItemRequest.StandardWMSItem.orderingUnitofMeasure == "Unit") "Units" else null,
+				ItemBarCode: payload.StandardWMSItemRequest.StandardWMSItem.barcode withMaxSize 50,
+				ProductType: payload.StandardWMSItemRequest.StandardWMSItem.attributes.productType withMaxSize 3,
+				StdBundlQty: payload.StandardWMSItemRequest.StandardWMSItem.attributes.standardBundleQuantity as String {format: "#.00"} default null,
 				ItemProfileName: vars.clientInfo.businessUnit withMaxSize 30,
-				ReferenceField1: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[0] withMaxSize 25 default null,
-				ReferenceField2: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[1] withMaxSize 25 default null,
-				ReferenceField3: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[2] withMaxSize 25 default null,
-				ReferenceField4: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[3] withMaxSize 25 default null,
-				ReferenceField5: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[4] withMaxSize 25 default null,
-				ReferenceField6: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[5] withMaxSize 25 default null,
-				ReferenceField7: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[6] withMaxSize 25 default null,
-				ReferenceField8: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[7] withMaxSize 25 default null,
-				ReferenceField9: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[8] withMaxSize 25 default null,
-				ReferenceField10: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[9] withMaxSize 25 default null,
-				ReferenceNumberField1: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0]))) payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0] as String {format: "#.00000"} else null) default null,
-				ReferenceNumberField2: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1]))) payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1] as String {format: "#.00000"} else null) default null,
-				ReferenceNumberField3: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2]))) payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2] as String {format: "#.00000"} else null) default null,
-				ReferenceNumberField4: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3]))) payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3] as String {format: "#.00000"} else null) default null,
-				ReferenceNumberField5: (if ((payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4]))) payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4] as String {format: "#.00000"} else null) default null,
-				CommerceAttribute1: payload.wincantonStandardWMSItemRequest.internalActionFields.actionID withMaxSize 50,
+				ReferenceField1: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[0] withMaxSize 25 default null,
+				ReferenceField2: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[1] withMaxSize 25 default null,
+				ReferenceField3: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[2] withMaxSize 25 default null,
+				ReferenceField4: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[3] withMaxSize 25 default null,
+				ReferenceField5: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[4] withMaxSize 25 default null,
+				ReferenceField6: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[5] withMaxSize 25 default null,
+				ReferenceField7: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[6] withMaxSize 25 default null,
+				ReferenceField8: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[7] withMaxSize 25 default null,
+				ReferenceField9: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[8] withMaxSize 25 default null,
+				ReferenceField10: payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceStrings.*referenceFieldString[9] withMaxSize 25 default null,
+				ReferenceNumberField1: (if ((payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0]))) payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[0] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField2: (if ((payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1]))) payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[1] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField3: (if ((payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2]))) payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[2] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField4: (if ((payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3]))) payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[3] as String {format: "#.00000"} else null) default null,
+				ReferenceNumberField5: (if ((payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4] as String {format: "#.00000"} as Number) == 0) null else if((!isEmpty(payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4]))) payload.StandardWMSItemRequest.StandardWMSItem.referenceFields.referenceNumbers.*referenceFieldNumber[4] as String {format: "#.00000"} else null) default null,
+				CommerceAttribute1: payload.StandardWMSItemRequest.internalActionFields.actionID withMaxSize 50,
 				MarkForDeletion: "1",
 				ItemSupplierXrefList: {
 					ItemSupplierXref: {
-						SupplierItemBarcode: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.supplierCrossReferenceInformation.supplierBarcode withMaxSize 20,
-						ScanQnty: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.supplierCrossReferenceInformation.supplierQuantity as String {format: "#.00"} default null,
-						ItemBarCode: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.supplierCrossReferenceInformation.itemBarcode withMaxSize 50,
+						SupplierItemBarcode: payload.StandardWMSItemRequest.StandardWMSItem.supplierCrossReferenceInformation.supplierBarcode withMaxSize 20,
+						ScanQnty: payload.StandardWMSItemRequest.StandardWMSItem.supplierCrossReferenceInformation.supplierQuantity as String {format: "#.00"} default null,
+						ItemBarCode: payload.StandardWMSItemRequest.StandardWMSItem.supplierCrossReferenceInformation.itemBarcode withMaxSize 50,
 						MarkForDeletion: "1"
 					}
 				},
@@ -623,12 +623,12 @@ fun itemWmosMapping(value) = if(value == "Not Required") "N"
 					ItemFacilityWMS: {
 						FacilityName: vars.clientInfo.facilityID,
 						ItemFacilityProfileName: vars.clientInfo.businessUnit withMaxSize 30,
-						ShelfDays: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.shelfLife.shelfLifeDays as Number withMaxSize 5 default null,
+						ShelfDays: payload.StandardWMSItemRequest.StandardWMSItem.shelfLife.shelfLifeDays as Number withMaxSize 5 default null,
 						MarkForDeletion: "1"
 					}
 				},
 				ItemPackageList: {
-				    ItemPackage: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.*handlingUnits.*handlingUnitCase map ((hCase, index) -> {
+				    ItemPackage: payload.StandardWMSItemRequest.StandardWMSItem.*handlingUnits.*handlingUnitCase map ((hCase, index) -> {
                         PkgUOM: "Cases",
                         Weight: hCase.handlingUnitDimensions.weightDimensions.weight as Number {format: "#.#"} default null, 
                         Quantity: hCase.handlingUnitDetails.unitQuantity as String {format: "#.0000"},
@@ -647,7 +647,7 @@ fun itemWmosMapping(value) = if(value == "Not Required") "N"
                         IsStandard: "1",
                         MarkForDeletion: "1",
                     }),
-                    ItemPackage: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.*handlingUnits.*handlingUnitPallet map ((hPallet, index) -> {
+                    ItemPackage: payload.StandardWMSItemRequest.StandardWMSItem.*handlingUnits.*handlingUnitPallet map ((hPallet, index) -> {
                       	PkgUOM: "Pallets",
                       	Weight: hPallet.handlingUnitDimensions.weightDimensions.weight as Number {format: "#.#"} default null, 
                       	Quantity: hPallet.handlingUnitDetails.unitQuantity as String {format: "#.0000"},
@@ -668,21 +668,21 @@ fun itemWmosMapping(value) = if(value == "Not Required") "N"
                     }),
                 },
 				ItemWmos: {
-					ProdSubGrp: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.subGroup withMaxSize 3,
-					SaleGrp: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.salesGroup withMaxSize 6,
-					XpireDateReqd: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.expiryDateRequired == "Prompt if Null") "0" 
-									else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.expiryDateRequired == "Always Prompt") "1"
-									else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.expiryDateRequired == "Never Prompt") "N"
+					ProdSubGrp: payload.StandardWMSItemRequest.StandardWMSItem.attributes.subGroup withMaxSize 3,
+					SaleGrp: payload.StandardWMSItemRequest.StandardWMSItem.attributes.salesGroup withMaxSize 6,
+					XpireDateReqd: if(payload.StandardWMSItemRequest.StandardWMSItem.attributes.expiryDateRequired == "Prompt if Null") "0" 
+									else if(payload.StandardWMSItemRequest.StandardWMSItem.attributes.expiryDateRequired == "Always Prompt") "1"
+									else if(payload.StandardWMSItemRequest.StandardWMSItem.attributes.expiryDateRequired == "Never Prompt") "N"
 									else null,
-					ItemAttrReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.itemAttributesRequired),
-					LotReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.lotRequired),
-					ProdStatReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.productStatusRequired),
-					CntryOfOrgnReqd: itemWmosMapping(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.countryOfOriginRequired),
-					EccnNbr: payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.ECCNNumber withMaxSize 6,
-					SrlNbrReq: if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Not Required") "0"
-								else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Track During Outbound Only") "1"
-								else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Track During Inbound Only") "3"
-								else if(payload.wincantonStandardWMSItemRequest.wincantonStandardWMSItem.attributes.serialNumberTrackingRequired == "Full Tracking Required") "4"
+					ItemAttrReqd: itemWmosMapping(payload.StandardWMSItemRequest.StandardWMSItem.attributes.itemAttributesRequired),
+					LotReqd: itemWmosMapping(payload.StandardWMSItemRequest.StandardWMSItem.attributes.lotRequired),
+					ProdStatReqd: itemWmosMapping(payload.StandardWMSItemRequest.StandardWMSItem.attributes.productStatusRequired),
+					CntryOfOrgnReqd: itemWmosMapping(payload.StandardWMSItemRequest.StandardWMSItem.attributes.countryOfOriginRequired),
+					EccnNbr: payload.StandardWMSItemRequest.StandardWMSItem.attributes.ECCNNumber withMaxSize 6,
+					SrlNbrReq: if(payload.StandardWMSItemRequest.StandardWMSItem.attributes.serialNumberTrackingRequired == "Not Required") "0"
+								else if(payload.StandardWMSItemRequest.StandardWMSItem.attributes.serialNumberTrackingRequired == "Track During Outbound Only") "1"
+								else if(payload.StandardWMSItemRequest.StandardWMSItem.attributes.serialNumberTrackingRequired == "Track During Inbound Only") "3"
+								else if(payload.StandardWMSItemRequest.StandardWMSItem.attributes.serialNumberTrackingRequired == "Full Tracking Required") "4"
 								else null
 				}
 			}
@@ -715,7 +715,7 @@ output application/json
 		</json-logger:logger>
 		<set-variable value='#[output application/json&#10;---&#10;"Dropping file " ++ vars.filename ++ " into SFTP"]' doc:name="eventName" doc:id="8a04b6b5-0d78-4cdb-a59b-c4f2e0d15a92" variableName="eventName" />
 		<until-successful maxRetries="${retry.numOfRetries}" doc:name="Until Successful" doc:id="711913c8-e535-42ca-b841-a25a5c3a28bf" millisBetweenRetries="${retry.milliseconds}">
-			<sftp:write doc:name="write-to-manhattan-sftp" doc:id="d3685476-e97b-4997-9fbf-ebfd2cdaf292" config-ref="MH_SFTP-config" path="#[vars.sftpDetails.sftpDestinationFolder ++ vars.filename]">
+			<sftp:write doc:name="write-to-sftp" doc:id="d3685476-e97b-4997-9fbf-ebfd2cdaf292" config-ref="SFTP-config" path="#[vars.sftpDetails.sftpDestinationFolder ++ vars.filename]">
 		</sftp:write>
 		</until-successful>
 		<ee:transform doc:name="set-next filename-sequence" doc:id="8fc10172-af86-4fa7-9cdf-8db52a864234" >

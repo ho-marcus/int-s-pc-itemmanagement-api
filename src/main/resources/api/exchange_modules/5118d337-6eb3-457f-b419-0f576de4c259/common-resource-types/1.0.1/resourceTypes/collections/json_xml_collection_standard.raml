@@ -1,0 +1,76 @@
+#%RAML 1.0 ResourceType
+
+#GET method JSON & XML
+    get?:
+      description: <<getDescription>>
+      is: 
+        - jsonResponse: {statusCode: 200, responseDescription: "This status code will be returned when the request has succeeded", recordType: <<getResponseTypeJson>>, recordExample: <<getResponseExampleJson>>}
+        - xmlResponse: {statusCode: 200, responseDescription: "This status code will be returned when the request has succeeded", recordType: <<getResponseTypeXml>>, recordExample: <<getResponseExampleXml>>}
+        - getErrorResponse
+
+
+
+#POST method JSON & XML
+    post?:      
+      description: <<postDescription>>
+      body:
+        application/json:
+          type: <<postRequestTypeJson>>
+          example: <<postRequestExampleJson>>
+        application/xml:
+          type: <<postRequestTypeXml>>
+          example: <<postRequestExampleXml>>
+      is: 
+        - jsonResponse: {statusCode: 201, responseDescription: "This status code will be returned when the request has succeeded and a new resource has been created as a result", recordType: <<postResponseTypeJson>>, recordExample: <<postResponseExampleJson>>}
+        - xmlResponse: {statusCode: 201, responseDescription: "This status code will be returned when the request has succeeded and a new resource has been created as a result", recordType: <<postResponseTypeXml>>, recordExample: <<postResponseExampleXml>>}
+        - postErrorResponse
+      
+
+
+#PUT method JSON & XML
+    put?:      
+      description: <<putDescription>>
+      body: 
+        application/json:
+          type: <<putRequestTypeJson>>
+          example: <<putRequestExampleJson>> 
+        application/xml:
+          type: <<putRequestTypeXml>>
+          example: <<putRequestExampleXml>> 
+      is: 
+        - jsonResponse: {statusCode: 200, responseDescription: "This status code will be returned when the request has succeeded ", recordType: <<putResponseTypeJson>>, recordExample: <<putResponseExampleJson>>}
+        - xmlResponse: {statusCode: 200, responseDescription: "This status code will be returned when the request has succeeded ", recordType: <<putResponseTypeXml>>, recordExample: <<putResponseExampleXml>>}
+        - putErrorResponse
+      
+
+
+#PATCH method JSON & XML
+    patch?:      
+      description: <<patchDescription>>
+      body: 
+        application/json:
+          type: <<patchRequestTypeJson>>
+          example: <<patchRequestExampleJson>> 
+        application/xml:
+          type: <<patchRequestTypeXml>>
+          example: <<patchRequestExampleXml>>
+      is: 
+        - jsonResponse: {statusCode: 200, responseDescription: "This status code will be returned when the request has succeeded ", recordType: <<patchResponseTypeJson>>, recordExample: <<patchResponseExampleJson>>}
+        - xmlResponse: {statusCode: 200, responseDescription: "This status code will be returned when the request has succeeded ", recordType: <<patchResponseTypeXml>>, recordExample: <<patchResponseExampleXml>>}
+        - patchErrorResponse
+
+
+#DELETE method JSON & XML
+    delete?:      
+      description: <<deleteDescription>>
+      body: 
+        application/json:
+          type: <<deleteRequestTypeJson>>
+          example: <<deleteRequestExampleJson>>    
+        application/xml:
+          type: <<deleteRequestTypeXml>>
+          example: <<deleteRequestExampleXml>>
+      is: 
+        - jsonResponse: {statusCode: 200, responseDescription: "This status code will be returned when the request has succeeded ", recordType: <<deleteResponseTypeJson>>, recordExample: <<deleteResponseExampleJson>>}
+        - xmlResponse: {statusCode: 200, responseDescription: "This status code will be returned when the request has succeeded ", recordType: <<deleteResponseTypeXml>>, recordExample: <<deleteResponseExampleXml>>}
+        - deleteErrorResponse

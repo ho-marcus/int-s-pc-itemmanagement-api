@@ -1,5 +1,5 @@
 api:
   id: "18506837" #update
   
-MHSFTP:
+SFTP:
   root: "/incoming/"

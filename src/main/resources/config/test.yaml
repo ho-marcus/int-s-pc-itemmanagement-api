@@ -1,40 +1,40 @@
 api:
   id: "18972802"
-  domain: "int-s-mh2020-itemmanagement-api-test"
+  domain: "int-s-pc-itemmanagement-api-test"
   
 environment:
   id: "8f3de54c-73f0-4386-8998-1e7cb1117075"
   
-mhSftp:
+sftp:
   timeout: "30000"
 
 system:
-  #host: "wincanton-nonprod-dlb.lb.anypointdns.net" #--locally
-  host: "internal-wincanton-nonprod-dlb.lb.anypointdns.net" #--deploying
+  #host: "pc-nonprod-dlb.lb.anypointdns.net" #--locally
+  host: "internal-pc-nonprod-dlb.lb.anypointdns.net" #--deploying
   integrationServices:
     port: "443"
     timeout: "30000"
     basepath: "/int-s-glb-integrationservices-api-test/api/v1"
 
 wms:        
-  configRef: "WMS_MH_DB-config"
+  configRef: "WMS_DB-config"
                     
 awsSQS:
   createItem:
-    arn: "arn:aws:sqs:eu-west-2:860956655246:test_wn_warehousing_mh2020_item_create_mule"
-    queueURL: "https://sqs:eu-west-2.amazonaws.com/860956655246/test_wn_warehousing_mh2020_item_create_mule"
-    dlqArn: "arn:aws:sqs:eu-west-2:860956655246:test_wn_warehousing_mh2020_item_create_dlq_mule"
-    dlqQueueURL: "https://sqs:eu-west-2.amazonaws.com/860956655246/test_wn_warehousing_mh2020_item_create_dlq_mule"   
+    arn: "arn:aws:sqs:eu-west-2:519093596938:test_warehousing_pc_item_create_mule"
+    queueURL: "https://sqs:eu-west-2.amazonaws.com/519093596938/test_warehousing_pc_item_create_mule"
+    dlqArn: "arn:aws:sqs:eu-west-2:519093596938:test_warehousing_pc_item_create_dlq_mule"
+    dlqQueueURL: "https://sqs:eu-west-2.amazonaws.com/519093596938/test_warehousing_pc_item_create_dlq_mule"    
   updateItem:
-    arn: "arn:aws:sqs:eu-west-2:860956655246:test_wn_warehousing_mh2020_item_update_mule"
-    queueURL: "https://sqs:eu-west-2.amazonaws.com/860956655246/test_wn_warehousing_mh2020_item_update_mule"
-    dlqArn: "arn:aws:sqs:eu-west-2:860956655246:test_wn_warehousing_mh2020_item_update_dlq_mule"
-    dlqQueueURL: "https://sqs:eu-west-2.amazonaws.com/860956655246/test_wn_warehousing_mh2020_item_update_dlq_mule"
+    arn: "arn:aws:sqs:eu-west-2:519093596938:test_warehousing_pc_item_update_mule"
+    queueURL: "https://sqs:eu-west-2.amazonaws.com/519093596938/test_warehousing_pc_item_update_mule"
+    dlqArn: "arn:aws:sqs:eu-west-2:519093596938:test_warehousing_pc_item_update_dlq_mule"
+    dlqQueueURL: "https://sqs:eu-west-2.amazonaws.com/519093596938/test_warehousing_pc_item_update_dlq_mule" 
   deleteItem:
-    arn: "arn:aws:sqs:eu-west-2:860956655246:test_wn_warehousing_mh2020_item_delete_mule"
-    queueURL: "https://sqs:eu-west-2.amazonaws.com/860956655246/test_wn_warehousing_mh2020_item_delete_mule"
-    dlqArn: "arn:aws:sqs:eu-west-2:860956655246:test_wn_warehousing_mh2020_item_delete_dlq_mule"
-    dlqQueueURL: "https://sqs:eu-west-2.amazonaws.com/860956655246/test_wn_warehousing_mh2020_item_delete_dlq_mule" 
+    arn: "arn:aws:sqs:eu-west-2:519093596938:test_warehousing_pc_item_delete_mule"
+    queueURL: "https://sqs:eu-west-2.amazonaws.com/519093596938/test_warehousing_pc_item_delete_mule"
+    dlqArn: "arn:aws:sqs:eu-west-2:519093596938:test_warehousing_pc_item_delete_dlq_mule"
+    dlqQueueURL: "https://sqs:eu-west-2.amazonaws.com/519093596938/test_warehousing_pc_item_delete_dlq_mule" 
     
 awsSNS:
-    globalErrorTopicArn: "arn:aws:sns:eu-west-2:860956655246:test-wn-warehousing-global-error" 
+    globalErrorTopicArn: "arn:aws:sns:eu-west-2:519093596938:test-warehousing-global-error"   

@@ -1,0 +1,59 @@
+#%RAML 1.0 ResourceType
+
+#GET method JSON & XML
+    get?:
+      description: <<getDescription>>
+      is: [success_200: {recordType: <<getResponseTypeJson>>, recordExample: <<getResponseExampleJson>>}, success_200_xml: {recordType: <<getResponseTypeXml>>, recordExample: <<getResponseExampleXml>>}, getErrorResponse]
+
+
+#POST method JSON & XML
+    post?:      
+      description: <<postDescription>>
+      body:
+        application/json:
+          type: <<postRequestTypeJson>>
+          example: <<postRequestExampleJson>>
+        application/xml:
+          type: <<postRequestTypeXml>>
+          example: <<postRequestExampleXml>>
+      is: [success_201: {recordType: <<postResponseTypeJson_201>>, recordExample: <<postResponseExampleJson_201>>},
+success_201_xml: {recordType: <<postResponseTypeXml_201>>, recordExample: <<postResponseExampleXml_201>>}, success_202: {recordType: <<postResponseTypeJson_202>>, recordExample: <<postResponseExampleJson_202>>}, success_202_xml: {recordType: <<postResponseTypeXml_202>>, recordExample: <<postResponseExampleXml_202>>},  postErrorResponse]
+
+
+#PUT method JSON & XML
+    put?:      
+      description: <<putDescription>>
+      body: 
+        application/json:
+          type: <<putRequestTypeJson>>
+          example: <<putRequestExampleJson>> 
+        application/xml:
+          type: <<putRequestTypeXml>>
+          example: <<putRequestExampleXml>> 
+      is: [success_200: {recordType: <<putResponseTypeJson_200>>, recordExample: <<putResponseExampleJson_200>>}, success_200_xml: {recordType: <<putResponseTypeXml_200>>, recordExample: <<putResponseExampleXml_200>>}, success_202: {recordType: <<putResponseTypeJson_202>>, recordExample: <<putResponseExampleJson_202>>}, success_202_xml: {recordType: <<putResponseTypeXml_202>>, recordExample: <<putResponseExampleXml_202>>}, putErrorResponse] 
+
+
+#PATCH method JSON & XML
+    patch?:      
+      description: <<patchDescription>>
+      body: 
+        application/json:
+          type: <<patchRequestTypeJson>>
+          example: <<patchRequestExampleJson>> 
+        application/xml:
+          type: <<patchRequestTypeXml>>
+          example: <<patchRequestExampleXml>>
+      is: [success_200: {recordType: <<patchResponseTypeJson_200>>, recordExample: <<patchResponseExampleJson_200>>}, success_200_xml: {recordType: <<patchResponseTypeXml_200>>, recordExample: <<patchResponseExampleXml_200>>}, success_202: {recordType: <<patchResponseTypeJson_202>>, recordExample: <<patchResponseExampleJson_202>>}, success_202_xml: {recordType: <<patchResponseTypeXml_202>>, recordExample: <<patchResponseExampleXml_202>>}, patchErrorResponse] 
+
+
+#DELETE method JSON & XML
+    delete?:      
+      description: <<deleteDescription>>
+      body: 
+        application/json:
+          type: <<deleteRequestTypeJson>>
+          example: <<deleteRequestExampleJson>>    
+        application/xml:
+          type: <<deleteRequestTypeXml>>
+          example: <<deleteRequestExampleXml>>
+      is: [success_200: {recordType: <<deleteResponseTypeJson_200>>, recordExample: <<deleteResponseExampleJson_200>>}, success_200_xml: {recordType: <<deleteResponseTypeXml_200>>, recordExample: <<deleteResponseExampleXml_200>>}, success_202_xml: {recordType: <<deleteResponseTypeXml_202>>, recordExample: <<deleteResponseExampleXml_202>>},success_202: {recordType: <<deleteResponseTypeJson_202>>, recordExample: <<deleteResponseExampleJson_202>>}, deleteErrorResponse]

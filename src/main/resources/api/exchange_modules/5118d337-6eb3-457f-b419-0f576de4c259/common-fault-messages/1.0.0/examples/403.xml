@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<root>
+  <statusCode>403</statusCode>
+  <statusType>Forbidden</statusType>
+  <statusMessage>Permission to access resource is denied by the server. Check that you have permissions to access required resources.</statusMessage>
+  <transactionID>3F2504E0-4F89-11D3-9A0C-0305E82C3301</transactionID>
+  <correlationID>84ccd6ea-a5d3-4d2b-b675-fc471f3cb0e6</correlationID>
+  <statusDetails>
+    <messageID>X</messageID>
+    <messageType>Error</messageType>
+    <messageDetails>The credentials provided are invalid</messageDetails>
+  </statusDetails>
+</root>

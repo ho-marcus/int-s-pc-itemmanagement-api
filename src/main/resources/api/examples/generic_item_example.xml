@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<wincantonStandardWMSItemRequest xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-    <wincantonStandardWMSItem>
+<StandardWMSItemRequest xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <StandardWMSItem>
         <itemCode>itemCode0</itemCode>
         <status>Active</status>
         <descriptions>
@@ -119,9 +119,9 @@
             <countryOfOriginRequired>Accept If Not Present</countryOfOriginRequired>
             <serialNumberTrackingRequired>Track During Inbound Only</serialNumberTrackingRequired>
         </attributes>
-    </wincantonStandardWMSItem>
+    </StandardWMSItem>
     <internalActionFields>
         <actionID>actionID0</actionID>
         <actionDateTime>2024-12-19T09:34:46</actionDateTime>
     </internalActionFields>
-</wincantonStandardWMSItemRequest>
+</StandardWMSItemRequest>

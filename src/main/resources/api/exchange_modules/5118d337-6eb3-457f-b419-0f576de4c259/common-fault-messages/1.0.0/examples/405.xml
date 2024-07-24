@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<root>
+  <statusCode>405</statusCode>
+  <statusType>Unsupported Method</statusType>
+  <statusMessage>The requested resource does not support the specified HTTP action. Verify that you are calling an action supported by the requested endpoint</statusMessage>
+  <transactionID>3F2504E0-4F89-11D3-9A0C-0305E82C3301</transactionID>
+  <correlationID>84ccd6ea-a5d3-4d2b-b675-fc471f3cb0e6</correlationID>
+  <statusDetails>
+    <messageID>X</messageID>
+    <messageType>Error</messageType>
+    <messageDetails>Help URL-</messageDetails>
+  </statusDetails>
+</root>
